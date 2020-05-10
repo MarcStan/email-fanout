@@ -106,7 +106,7 @@ namespace EmailFanout.Logic.Services
                             sender = Format(action.Properties.Property("sender")?.Value?.ToString() ?? request.Email.From.Email),
                             subject = Format(action.Properties.Property("subject")?.Value?.ToString() ?? request.Email.Subject),
                             body = Format(action.Properties.Property("body")?.Value?.ToString() ?? request.Email.Text ?? request.Email.Html),
-                            attachments = !"keep".Equals(action.Properties.Property("attachments")?.Value?.ToString(), StringComparison.OrdinalIgnoreCase) ?
+                            attachments = "keep".Equals(action.Properties.Property("attachments")?.Value?.ToString(), StringComparison.OrdinalIgnoreCase) ?
                                 request.Email.Attachments :
                                 null
                         };
