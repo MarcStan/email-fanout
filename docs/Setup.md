@@ -8,7 +8,7 @@ The configuration is a mix of keyvault and storage account (by default the `conf
 
 The general config should be placed in the storage container while the secrets should be stored in the keyvault.
 
-The config file looks like this:
+The config file (`email-fanout.json`) looks like this:
 
 ``` json
 {
@@ -18,7 +18,8 @@ The config file looks like this:
             "filters": null,
             "actions": [
                 {
-                    "type": "forward",
+                    "id": "unique-id",
+                    "type": "Forward",
                     "properties": {
                         "webhook": {
                             "secretName": "Webhook1"

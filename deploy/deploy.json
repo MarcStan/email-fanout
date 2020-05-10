@@ -140,7 +140,8 @@
                         "FUNCTIONS_WORKER_RUNTIME": "dotnet",
                         "KeyVaultName": "[variables('keyVaultName')]",
                         "WEBSITE_RUN_FROM_PACKAGE": "1",
-                        "ConfigContainerName": "config"
+                        "ConfigContainerName": "config",
+                        "EmailStatusTableName": "emailstatus"
                     }
                 }
             ]

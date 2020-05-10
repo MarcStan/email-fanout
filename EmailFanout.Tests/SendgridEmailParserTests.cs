@@ -1,5 +1,5 @@
-﻿using EmailFanout.Logic;
-using EmailFanout.Logic.Models;
+﻿using EmailFanout.Logic.Models;
+using EmailFanout.Logic.Services;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;

@@ -1,4 +1,5 @@
 using EmailFanout.Logic;
+using EmailFanout.Logic.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -11,14 +12,16 @@ using System.Threading.Tasks;
 
 namespace EmailFanout
 {
-    public class ReceiveFunction
+    public class Functions
     {
         private readonly IEmailService _emailService;
+        private readonly ISendgridEmailParser _sendgridEmailParser;
 
-        public ReceiveFunction(
-            IEmailService emailService)
+        public Functions(IEmailService emailService,
+            ISendgridEmailParser sendgridEmailParser)
         {
             _emailService = emailService;
+            _sendgridEmailParser = sendgridEmailParser;
         }
 
         /// <summary>
@@ -27,7 +30,6 @@ namespace EmailFanout
         [FunctionName("receive")]
         public async Task<IActionResult> ReceiveAsync(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            Microsoft.Azure.WebJobs.ExecutionContext context,
             ILogger log,
             CancellationToken cancellationToken)
         {
@@ -38,10 +40,21 @@ namespace EmailFanout
                     // body can only be read once
                     req.Body.CopyTo(stream);
                     stream.Position = 0;
-                    await _emailService.ProcessMailAsync(stream, cancellationToken);
-                }
 
-                return new OkResult();
+                    var email = _sendgridEmailParser.Parse(stream);
+                    stream.Position = 0;
+                    var request = new EmailRequest
+                    {
+                        Body = stream,
+                        Email = email
+                    };
+                    if (await _emailService.ProcessMailAsync(request, cancellationToken))
+                    {
+                        return new OkResult();
+                    }
+                    // one or more actions failed. let sendgrid handle the retry
+                    return new BadRequestResult();
+                }
             }
             catch (Exception e)
             {

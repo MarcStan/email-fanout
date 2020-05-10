@@ -1,0 +1,53 @@
+﻿using EmailFanout.Logic.Config;
+using EmailFanout.Logic.Models;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Extensions.Configuration;
+using Microsoft.WindowsAzure.Storage.Table;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace EmailFanout.Logic.Services
+{
+    public class StatusService : IStatusService
+    {
+        private readonly CloudTable _table;
+
+        public StatusService(
+            StorageAccount storageAccount,
+            IConfiguration configuration)
+        {
+            var client = storageAccount.CreateCloudTableClient();
+            _table = client.GetTableReference(configuration["EmailStatusTableName"] ?? throw new KeyNotFoundException("Missing key 'EmailStatusTableName'"));
+        }
+
+        public async Task<IReadOnlyDictionary<string, StatusModel>> GetStatusAsync(EmailRequest request, CancellationToken cancellationToken)
+        {
+            await _table.CreateIfNotExistsAsync(null, null, cancellationToken);
+            var tableQuery = new TableQuery<StatusModel>
+            {
+                FilterString = TableQuery.CombineFilters("", TableOperators.And, "")
+            };
+
+            TableContinuationToken token = null;
+            var stati = new List<StatusModel>();
+            do
+            {
+                var result = await _table.ExecuteQuerySegmentedAsync(tableQuery, null, null, null, cancellationToken);
+                token = result.ContinuationToken;
+                stati.AddRange(result.Results);
+            }
+            while (token != null);
+            return stati.ToDictionary(x => x.Id, x => x);
+        }
+
+        public async Task<StatusModel> UpdateAsync(Email mail, EmailAction action, EmailFanoutStatus status, CancellationToken cancellationToken)
+        {
+            await _table.CreateIfNotExistsAsync(null, null, cancellationToken);
+            var model = new StatusModel(mail, action);
+            await _table.ExecuteAsync(TableOperation.Insert(model), null, null, cancellationToken);
+            return model;
+        }
+    }
+}

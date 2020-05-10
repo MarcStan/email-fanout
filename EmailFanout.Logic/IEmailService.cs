@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿using EmailFanout.Logic.Models;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,8 +7,9 @@ namespace EmailFanout.Logic
     public interface IEmailService
     {
         /// <summary>
-        /// Called with the body sent by sendgrid to determine which targets should receive the email.
+        /// Called to forward the received mail to all targets.
         /// </summary>
-        Task ProcessMailAsync(MemoryStream body, CancellationToken cancellationToken);
+        /// <returns>True if all actions succeeded, false otherwise.</returns>
+        Task<bool> ProcessMailAsync(EmailRequest request, CancellationToken cancellationToken);
     }
 }

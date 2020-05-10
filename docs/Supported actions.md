@@ -1,10 +1,12 @@
 # Supported actions
 
-Actions are defined by the `type` and custom `properties`.
+Actions are defined by the `type`, `id` and custom `properties`.
 
 The configuration supports an arbitrary amount of actions and the system internally takes care of delivering the emails to each.
 
-### forward
+Each action must have a unique id across the file and the id should not change for any action as it is used in case of retries (see [Fault tolerance](Fault%20tolerance.md)).
+
+### Forward
 
 Forwards the email as is to another webhook.
 
@@ -12,7 +14,8 @@ The webhook url must be stored in a keyvault secret and the webhook must receive
 
 ``` json
 {
-    "type": "forward",
+    "type": "Forward",
+    "id": "unique-id",
     "properties": {
         "webhook": {
             "secretName": "Webhook1"
@@ -38,11 +41,11 @@ Attachments are stored in subdirectories named identical to the json file (`yyyy
 }
 ```
 
-### notify
+### webhook
 
-When a specific email is received a notification is forwarded.
+When a specific email is received a notification is sent to a webhook.
 
-Content of the original email can be inserted with `%subject%`, `%sender%` and `%body%` placeholders.
+Content of the original email can be inserted with `%subject%`, `%sender%`and `%body%` placeholders.
 
 Attachments can either be kept or dropped.
 
@@ -52,7 +55,27 @@ Attachments can either be kept or dropped.
     "properties": {
         "subject": "Notification",
         "body": "Email from %sender% regarding '%subject%'",
+        "sender": "sender was %sender%",
         "attachments": "keep|drop"
     }
+}
+```
+
+The resulting event currently has this format (attachments keep the format sent by sendgrid):
+
+``` json
+{
+    "sender": "bloah",
+    "subject": "foo",
+    "body": "bar",
+    "attachments": [
+        {
+            "id": "",
+            "fileName": "",
+            "base64Data": "",
+            "content-id": "",
+            "type": ""
+        }
+    ]
 }
 ```

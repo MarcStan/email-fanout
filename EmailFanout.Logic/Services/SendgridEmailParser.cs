@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace EmailFanout.Logic
+namespace EmailFanout.Logic.Services
 {
     public class SendgridEmailParser : ISendgridEmailParser
     {

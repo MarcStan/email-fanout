@@ -1,3 +1,11 @@
 {
-    "version": "2.0"
+  "version": "2.0",
+  // max possible, better play it safe
+  "functionTimeout": "00:10:00",
+  // https://github.com/Azure/Azure-Functions/issues/1256#issuecomment-505478565
+  "logging": {
+    "logLevel": {
+      "EmailFanout": "Information"
+    }
+  }
 }
