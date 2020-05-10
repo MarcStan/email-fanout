@@ -24,7 +24,7 @@ The webhook url must be stored in a keyvault secret and the webhook must receive
 }
 ```
 
-### archive
+### Archive
 
 Stores each email in blob storage.
 
@@ -34,25 +34,28 @@ Attachments are stored in subdirectories named identical to the json file (`yyyy
 
 ``` json
 {
-    "type": "archive",
+    "type": "Archive",
     "properties": {
         "containerName": "emails"
     }
 }
 ```
 
-### webhook
+### Webhook
 
 When a specific email is received a notification is sent to a webhook.
 
 Content of the original email can be inserted with `%subject%`, `%sender%`and `%body%` placeholders.
 
-Attachments can either be kept or dropped.
+Attachments can either be kept or dropped (they are dropped by default).
 
 ``` json
 {
     "type": "notify",
     "properties": {
+        "webhook": {
+            "secretName": "Webhook2"
+        },
         "subject": "Notification",
         "body": "Email from %sender% regarding '%subject%'",
         "sender": "sender was %sender%",
@@ -61,7 +64,7 @@ Attachments can either be kept or dropped.
 }
 ```
 
-The resulting event currently has this format (attachments keep the format sent by sendgrid):
+The webhook url must be stored in a keyvault secret and the webhook must receive POST requests with the format (attachment format is identical to sendgrid):
 
 ``` json
 {
