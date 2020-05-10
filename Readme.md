@@ -1,5 +1,7 @@
 # Sendgrid based fanout mechanism for incoming email
 
+:warning: WIP & largely untested.
+
 I have built multiple solutions that parse incoming emails to perform actions:
 
 - [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker) - Creates bug entries in Azure DevOps based on specially crafted emails
@@ -8,7 +10,9 @@ I have built multiple solutions that parse incoming emails to perform actions:
 
 # Problem
 
-Only one of these services can run on a domain at any point in time as sendgrid only allows one webhook per (sub)domain.
+Each service listens for incoming emails via the Sendgrid Inbound Parse feature.
+
+But only one of these services can run on a domain at any point in time as sendgrid only allows one webhook per (sub)domain.
 
 My current workaround is to use subdomains to set them all up (`<recipient>@example.com`, `<recipient>@bugs.example.com` & `<recipient>.matrix@example.com`).
 
@@ -18,20 +22,16 @@ If it where possible to set multiple webhooks on a single domain I would have to
 
 To receive emails on a single domain/address I built this Azure function based fanout system that can forward emails based on filters to the various other webhooks.
 
-Because Sendgrid has a built in [retry mechanism](https://sendgrid.com/docs/API_Reference/SMTP_API/errors_and_troubleshooting.html) (retry for 72 hours when error codes are received) I had to reimplement the retry in this function.
+This function builds ontop of the Sendgrid [retry mechanism](https://sendgrid.com/docs/API_Reference/SMTP_API/errors_and_troubleshooting.html) (retry for 72 hours when error codes are received).
 
-The function uses a queuing system to store the emails temporarily (it can thus immediately acknoledge sendgrid with a 200).
-
-The queue is then processed and the filters are validated to determine who needs to receive the emails.
-
-Each target is retried with the same pattern as Sendgrid (retry for 72 hours with exponential backoff) and marked as delivered on success to prevent double sending emails.
+See [Fault tolerance](docs/Fault%20tolerance.md) for more details.
 
 # Features
 
 * fanout emails to multiple webhooks
 * filtering to forward emails to specific targets only
 * retry & failsafe
-* (optional) persist email in storage account (on/off or only when forwarding failed)
+* multiple supported targets and formats (webhook, storage account)
 
 ___
 :warning: When setting mx record of your root domain to sendgrid **all** emails will be relayed through sendgrid. If you have a regular mail client, **it will no longer receive emails!**
