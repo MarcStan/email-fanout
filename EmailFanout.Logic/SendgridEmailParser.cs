@@ -10,14 +10,12 @@ using System.Text;
 
 namespace EmailFanout.Logic
 {
-    public class SendgridEmailParser
+    public class SendgridEmailParser : ISendgridEmailParser
     {
         /// <summary>
         /// Parses a raw multipart form from the stream as a sendgrid email according to https://sendgrid.com/docs/for-developers/parsing-email/setting-up-the-inbound-parse-webhook/#default-parameters
         /// Adapted from https://github.com/KoditkarVedant/sendgrid-inbound
         /// </summary>
-        /// <param name="body"></param>
-        /// <returns></returns>
         public Email Parse(MemoryStream body)
         {
             var parser = MultipartFormDataParser.Parse(body, Encoding.UTF8);
