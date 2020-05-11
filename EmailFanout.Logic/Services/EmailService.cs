@@ -1,5 +1,4 @@
-﻿using Azure.Security.KeyVault.Secrets;
-using EmailFanout.Logic.Config;
+﻿using EmailFanout.Logic.Config;
 using EmailFanout.Logic.Models;
 using Newtonsoft.Json;
 using System;
@@ -13,23 +12,23 @@ namespace EmailFanout.Logic.Services
     public class EmailService : IEmailService
     {
         private readonly IStatusService _statusService;
-        private readonly SecretClient _secretClient;
+        private readonly IKeyVaultHelper _keyVaultHelper;
         private readonly IConfigService _configService;
         private readonly IBlobStorageService _blobStorageService;
         private readonly IHttpClient _httpClient;
 
         public EmailService(
             IStatusService statusService,
-            SecretClient secretClient,
+            IKeyVaultHelper keyVaultHelper,
             IConfigService configService,
             IBlobStorageService blobStorageService,
             IHttpClient httpClient)
         {
             _statusService = statusService;
-            _secretClient = secretClient;
             _configService = configService;
             _blobStorageService = blobStorageService;
             _httpClient = httpClient;
+            _keyVaultHelper = keyVaultHelper;
         }
 
         public async Task<bool> ProcessMailAsync(EmailRequest request, CancellationToken cancellationToken)
@@ -57,7 +56,15 @@ namespace EmailFanout.Logic.Services
                 catch (Exception ex)
                 {
                     errors.Add(ex);
-                    await _statusService.UpdateAsync(request, action, EmailFanoutStatus.DeferredOrFailed, cancellationToken);
+                    try
+                    {
+                        await _statusService.UpdateAsync(request, action, EmailFanoutStatus.DeferredOrFailed, true, cancellationToken);
+                    }
+                    catch (Exception ex2)
+                    {
+                        errors.Add(ex2);
+                        // continue to process other actions
+                    }
                 }
             }
             if (errors.Count > 0)
@@ -84,17 +91,17 @@ namespace EmailFanout.Logic.Services
                     break;
                 case ActionType.Forward:
                     {
-                        var secretName = action.Properties.Property("webhook").ToObject<Webhook>().SecretName;
-                        var webhookSecret = await _secretClient.GetSecretAsync(secretName, null, cancellationToken);
+                        var secretName = action.Properties.Property("webhook")?.Value?.ToObject<Webhook>()?.SecretName ?? throw new KeyNotFoundException($"Could not find secretName of webhook in action {action.Id}");
+                        var webhookUrl = await _keyVaultHelper.GetSecretAsync(secretName, cancellationToken);
 
                         request.Body.Position = 0;
-                        var r = await _httpClient.PostAsync(webhookSecret.Value.Value, request.Body, cancellationToken);
+                        var r = await _httpClient.PostAsync(webhookUrl, request.Body, cancellationToken);
                     }
                     break;
                 case ActionType.Webhook:
                     {
-                        var secretName = action.Properties.Property("webhook").ToObject<Webhook>().SecretName;
-                        var webhookSecret = await _secretClient.GetSecretAsync(secretName, null, cancellationToken);
+                        var secretName = action.Properties.Property("webhook")?.Value?.ToObject<Webhook>()?.SecretName ?? throw new KeyNotFoundException($"Could not find secretName of webhook in action {action.Id}");
+                        var webhookUrl = await _keyVaultHelper.GetSecretAsync(secretName, cancellationToken);
 
                         string Format(string text) => text
                             .Replace("%sender%", request.Email.From.Email)
@@ -110,7 +117,7 @@ namespace EmailFanout.Logic.Services
                                 request.Email.Attachments :
                                 null
                         };
-                        var r = await _httpClient.PostAsync(webhookSecret.Value.Value, obj, cancellationToken);
+                        var r = await _httpClient.PostAsync(webhookUrl, obj, cancellationToken);
                     }
                     break;
             }
