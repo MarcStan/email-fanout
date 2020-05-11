@@ -1,5 +1,6 @@
 ﻿using SendGrid.Helpers.Mail;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace EmailFanout.Logic.Models
@@ -10,6 +11,8 @@ namespace EmailFanout.Logic.Models
     public class Email
     {
         public KeyValuePair<string, string>[] Headers { get; set; }
+
+        public string Date => Headers.First(k => k.Key == "Date").Value;
 
         public EmailAddress From { get; set; }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +9,7 @@ namespace EmailFanout.Logic.Services
     {
         private readonly CloudBlobClient _client;
 
-        public BlobStorageService(StorageAccount storageAccount)
+        public BlobStorageService(CloudStorageAccount storageAccount)
         {
             _client = storageAccount.CreateCloudBlobClient();
         }

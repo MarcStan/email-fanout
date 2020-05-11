@@ -34,7 +34,7 @@ namespace EmailFanout.Logic.Services
 
         public async Task<bool> ProcessMailAsync(EmailRequest request, CancellationToken cancellationToken)
         {
-            var existingEntries = await _statusService.GetStatusAsync(request, cancellationToken);
+            var existingEntries = await _statusService.GetStatiAsync(request, cancellationToken);
             var config = await _configService.LoadAsync(cancellationToken);
 
             var errors = new List<Exception>();
@@ -45,19 +45,19 @@ namespace EmailFanout.Logic.Services
                     // check if mail/action combination was already processed before (and partially/fully succeeded)
                     // needed because we let sendgrid handle the retry
                     if (existingEntries.ContainsKey(action.Id) &&
-                        existingEntries[action.Id].Status == EmailFanoutStatus.Completed)
+                        existingEntries[action.Id].GetStatus() == EmailFanoutStatus.Completed)
                     {
                         // this email has already been successfully delivered to the target
                         continue;
                     }
 
                     await ProcessAsync(request, action, cancellationToken);
-                    await _statusService.UpdateAsync(request.Email, action, EmailFanoutStatus.Completed, cancellationToken);
+                    await _statusService.UpdateAsync(request, action, EmailFanoutStatus.Completed, cancellationToken);
                 }
                 catch (Exception ex)
                 {
                     errors.Add(ex);
-                    await _statusService.UpdateAsync(request.Email, action, EmailFanoutStatus.DeferredOrFailed, cancellationToken);
+                    await _statusService.UpdateAsync(request, action, EmailFanoutStatus.DeferredOrFailed, cancellationToken);
                 }
             }
             if (errors.Count > 0)
@@ -122,7 +122,7 @@ namespace EmailFanout.Logic.Services
             foreach (var rule in config.Rules)
             {
                 bool deliver = true;
-                foreach (var filter in rule.Filters)
+                foreach (var filter in rule.Filters ?? new EmailFilter[0])
                 {
                     if (!IsMatchedByFilter(mail, filter))
                     {

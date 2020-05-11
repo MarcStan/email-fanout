@@ -17,7 +17,8 @@ namespace EmailFanout
         private readonly IEmailService _emailService;
         private readonly ISendgridEmailParser _sendgridEmailParser;
 
-        public Functions(IEmailService emailService,
+        public Functions(
+            IEmailService emailService,
             ISendgridEmailParser sendgridEmailParser)
         {
             _emailService = emailService;
@@ -46,8 +47,12 @@ namespace EmailFanout
                     var request = new EmailRequest
                     {
                         Body = stream,
-                        Email = email
+                        Email = email,
+                        Checksum = Checksum.Calculate(stream),
+                        Timestamp = DateTimeOffset.Parse(email.Date)
                     };
+                    stream.Position = 0;
+
                     if (await _emailService.ProcessMailAsync(request, cancellationToken))
                     {
                         return new OkResult();

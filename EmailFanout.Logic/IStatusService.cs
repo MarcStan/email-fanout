@@ -8,8 +8,8 @@ namespace EmailFanout.Logic
 {
     public interface IStatusService
     {
-        Task<IReadOnlyDictionary<string, StatusModel>> GetStatusAsync(EmailRequest request, CancellationToken cancellationToken);
+        Task<IReadOnlyDictionary<string, StatusModel>> GetStatiAsync(EmailRequest request, CancellationToken cancellationToken);
 
-        Task<StatusModel> UpdateAsync(Email mail, EmailAction action, EmailFanoutStatus status, CancellationToken cancellationToken);
+        Task<StatusModel> UpdateAsync(EmailRequest request, EmailAction action, EmailFanoutStatus status, CancellationToken cancellationToken);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using EmailFanout.Logic.Config;
 using EmailFanout.Logic.Models;
-using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Configuration;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,19 +15,20 @@ namespace EmailFanout.Logic.Services
         private readonly CloudTable _table;
 
         public StatusService(
-            StorageAccount storageAccount,
+            CloudStorageAccount storageAccount,
             IConfiguration configuration)
         {
             var client = storageAccount.CreateCloudTableClient();
             _table = client.GetTableReference(configuration["EmailStatusTableName"] ?? throw new KeyNotFoundException("Missing key 'EmailStatusTableName'"));
         }
 
-        public async Task<IReadOnlyDictionary<string, StatusModel>> GetStatusAsync(EmailRequest request, CancellationToken cancellationToken)
+        public async Task<IReadOnlyDictionary<string, StatusModel>> GetStatiAsync(EmailRequest request, CancellationToken cancellationToken)
         {
             await _table.CreateIfNotExistsAsync(null, null, cancellationToken);
+            var partitionMatch = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, StatusModel.GetPartitionKey(request));
             var tableQuery = new TableQuery<StatusModel>
             {
-                FilterString = TableQuery.CombineFilters("", TableOperators.And, "")
+                FilterString = partitionMatch
             };
 
             TableContinuationToken token = null;
@@ -39,13 +40,13 @@ namespace EmailFanout.Logic.Services
                 stati.AddRange(result.Results);
             }
             while (token != null);
-            return stati.ToDictionary(x => x.Id, x => x);
+            return stati.ToDictionary(x => x.ActionId, x => x);
         }
 
-        public async Task<StatusModel> UpdateAsync(Email mail, EmailAction action, EmailFanoutStatus status, CancellationToken cancellationToken)
+        public async Task<StatusModel> UpdateAsync(EmailRequest request, EmailAction action, EmailFanoutStatus status, CancellationToken cancellationToken)
         {
             await _table.CreateIfNotExistsAsync(null, null, cancellationToken);
-            var model = new StatusModel(mail, action);
+            var model = new StatusModel(request, action, status);
             await _table.ExecuteAsync(TableOperation.Insert(model), null, null, cancellationToken);
             return model;
         }

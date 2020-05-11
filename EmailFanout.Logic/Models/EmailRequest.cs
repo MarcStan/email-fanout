@@ -19,5 +19,10 @@ namespace EmailFanout.Logic.Models
         /// The date of the email
         /// </summary>
         public DateTimeOffset Timestamp { get; set; }
+
+        /// <summary>
+        /// Checksum of the email
+        /// </summary>
+        public string Checksum { get; set; }
     }
 }
