@@ -11,9 +11,6 @@ namespace EmailFanout.Logic.Services
     {
         private readonly HttpClient _client = new HttpClient();
 
-        public Task<HttpResponseMessage> GetAsync(string url, CancellationToken cancellationToken)
-            => _client.GetAsync(url, cancellationToken);
-
         public Task<HttpResponseMessage> PostAsync(string url, Stream stream, CancellationToken cancellationToken)
             => _client.PostAsync(url, new StreamContent(stream), cancellationToken);
 

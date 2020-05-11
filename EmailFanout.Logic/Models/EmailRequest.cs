@@ -3,7 +3,7 @@ using System.IO;
 
 namespace EmailFanout.Logic.Models
 {
-    public class EmailRequest
+    public class EmailRequest : IDisposable
     {
         /// <summary>
         /// The original body received.
@@ -24,5 +24,29 @@ namespace EmailFanout.Logic.Models
         /// Checksum of the email
         /// </summary>
         public string Checksum { get; set; }
+
+        public static EmailRequest Parse(Stream stream, ISendgridEmailParser sendgridEmailParser)
+        {
+            var ms = new MemoryStream();
+            stream.CopyTo(ms);
+            ms.Position = 0;
+            var email = sendgridEmailParser.Parse(ms);
+            ms.Position = 0;
+            var checksum = Logic.Checksum.Calculate(ms);
+            ms.Position = 0;
+            var request = new EmailRequest
+            {
+                Body = ms,
+                Email = email,
+                Checksum = checksum,
+                Timestamp = DateTimeOffset.Parse(email.Date)
+            };
+            return request;
+        }
+
+        public void Dispose()
+        {
+            Body.Dispose();
+        }
     }
 }

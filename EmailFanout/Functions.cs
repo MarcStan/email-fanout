@@ -6,7 +6,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,23 +35,8 @@ namespace EmailFanout
         {
             try
             {
-                using (var stream = new MemoryStream())
+                using (var request = EmailRequest.Parse(req.Body, _sendgridEmailParser))
                 {
-                    // body can only be read once
-                    req.Body.CopyTo(stream);
-                    stream.Position = 0;
-
-                    var email = _sendgridEmailParser.Parse(stream);
-                    stream.Position = 0;
-                    var request = new EmailRequest
-                    {
-                        Body = stream,
-                        Email = email,
-                        Checksum = Checksum.Calculate(stream),
-                        Timestamp = DateTimeOffset.Parse(email.Date)
-                    };
-                    stream.Position = 0;
-
                     if (await _emailService.ProcessMailAsync(request, cancellationToken))
                     {
                         return new OkResult();
