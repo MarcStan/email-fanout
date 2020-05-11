@@ -43,3 +43,5 @@ This indirection is used because the webhook usually contains a secret (authcode
 See [Supported filters](Supported%20filters.md) for a list of all possible filters.
 
 See [Supported actions](Supported%20actions.md) for a list of all possible actions.
+
+And see [Examples](Examples.md) for a detailed example.

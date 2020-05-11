@@ -22,7 +22,13 @@ If it where possible to set multiple webhooks on a single domain I would have to
 
 To receive emails on a single domain/address I built this Azure function based fanout system that can forward emails based on filters to the various other webhooks.
 
-This function builds ontop of the Sendgrid [retry mechanism](https://sendgrid.com/docs/API_Reference/SMTP_API/errors_and_troubleshooting.html) (retry for 72 hours when error codes are received).
+The function allows defining simple filters (much like a regular rule engine in email clients) and can forward email to other webhooks (such as the ones mentioned before).
+
+This allows me to receive all emails via this function and have it forward the email to the respective sub systems based on filters.
+
+See [Examples](docs/Examples.md) for more details.
+
+It also builds ontop of the Sendgrid [retry mechanism](https://sendgrid.com/docs/API_Reference/SMTP_API/errors_and_troubleshooting.html) (retry for 72 hours when error codes are received).
 
 See [Fault tolerance](docs/Fault%20tolerance.md) for more details.
 
@@ -53,6 +59,10 @@ You can follow [their documentation](https://sendgrid.com/docs/ui/account-and-se
 Deployment is fully automated via Github actions. Just [setup credentials](https://github.com/marketplace/actions/azure-login#configure-azure-credentials), adjust the variables at the start of the yaml file (resourcegroup name) and run the action.
 
 See [Setup](docs/Setup.md) for more details.
+
+# Examples
+
+See [Examples](docs/Examples.md).
 
 # Testing
 

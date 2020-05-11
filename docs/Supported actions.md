@@ -1,5 +1,7 @@
 # Supported actions
 
+:warning: It is possible to create loops in the system when forwarding mails to other systems that in turn forward the email as well (or generate more emails). Be very careful when setting actions that can cause possible loops.
+
 Actions are defined by the `type`, `id` and custom `properties`.
 
 The configuration supports an arbitrary amount of actions and the system internally takes care of delivering the emails to each.
