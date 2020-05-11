@@ -134,7 +134,7 @@ namespace EmailFanout.Logic.Services
             }
         }
 
-        private EmailAction[] ActionsToPerform(Email mail, EmailConfig config)
+        public static EmailAction[] ActionsToPerform(Email mail, EmailConfig config)
         {
             var actions = new List<EmailAction>();
             foreach (var rule in config.Rules)
@@ -156,7 +156,7 @@ namespace EmailFanout.Logic.Services
             return actions.ToArray();
         }
 
-        private bool IsMatchedByFilter(Email mail, EmailFilter filter)
+        public static bool IsMatchedByFilter(Email mail, EmailFilter filter)
         {
             bool MatchAny(string text)
                 => text != null && filter.OneOf.Any(item => text.Contains(item));
@@ -178,6 +178,7 @@ namespace EmailFanout.Logic.Services
                     throw new ArgumentOutOfRangeException($"Unsupported {filter.Type}");
             }
         }
+
         private class Webhook
         {
             public string SecretName { get; set; }

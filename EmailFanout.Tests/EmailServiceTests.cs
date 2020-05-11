@@ -9,6 +9,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -411,6 +412,139 @@ namespace EmailFanout.Tests
 
             status.Verify(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()));
             status.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public void No_action_filter_should_return_all()
+        {
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+
+            var config = GetConfig();
+
+            var actions = EmailService.ActionsToPerform(request.Email, config);
+            actions.Select(a => a.Id).Should().ContainInOrder("forward-all", "notify-all");
+        }
+
+        [Test]
+        public void Unmatched_action_filter_should_ignore_all()
+        {
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+
+            var config = GetConfig();
+            config.Rules[0].Filters = new[]
+            {
+                new EmailFilter
+                {
+                    Type = "subject contains",
+                    OneOf = new[]
+                    {
+                        "not found"
+                    }
+                }
+            };
+
+            var actions = EmailService.ActionsToPerform(request.Email, config);
+            actions.Should().BeEmpty();
+        }
+
+        [Test]
+        public void Subject_filter_should_match()
+        {
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+
+            var config = GetConfig();
+            config.Rules[0].Filters = new[]
+            {
+                new EmailFilter
+                {
+                    Type = "subject contains",
+                    OneOf = new[]
+                    {
+                        "Test 1",
+                        "not found"
+                    }
+                },
+                new EmailFilter
+                {
+                    Type = "sender contains",
+                    OneOf = new[]
+                    {
+                        "not found",
+                        "sender@"
+                    }
+                }
+            };
+
+            var actions = EmailService.ActionsToPerform(request.Email, config);
+            actions.Select(a => a.Id).Should().ContainInOrder("forward-all", "notify-all");
+        }
+
+        [TestCase("sender contains", "sender@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("sender contains", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("subject contains", "Test 1", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("subject contains", "Test 2", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("body contains", "Test", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("subject/body contains", "Test", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("subject/body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("subject/body contains", "Test", "sender@example.com", "recipient@example.com", "Subject 1", "Test message", true)]
+        [TestCase("subject/body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("recipient contains", "recipient@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("recipient contains", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        public void Subject_filter_should_match_only_its_actions(string rule, string match, string sender, string recipient, string subject, string body, bool shouldMatch)
+        {
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+            request.Email.From.Email = sender;
+            request.Email.To[0].Email = recipient;
+            request.Email.Subject = subject;
+            request.Email.Text = request.Email.Html = body;
+
+            var config = GetConfig();
+            config.Rules = new[]
+            {
+                new EmailRule
+                {
+                    Filters = new[]
+                    {
+                        new EmailFilter
+                        {
+                            Type = rule,
+                            OneOf = new[]
+                            {
+                                match,
+                                "not found"
+                            }
+                        }
+                    },
+                    Actions = new[]
+                    {
+                        new EmailAction
+                        {
+                            Id = "notify-all",
+                            Type = ActionType.Webhook,
+                            Properties = JObject.FromObject(new
+                            {
+                                webhook = new
+                                {
+                                    secretName = "Webhook2"
+                                },
+                                subject = "You've got mail!",
+                                body ="%subject%"
+                            })
+                        }
+                    }
+                }
+            };
+
+            var actions = EmailService.ActionsToPerform(request.Email, config);
+            if (shouldMatch)
+                actions.Select(a => a.Id).Should().ContainInOrder("notify-all");
+            else
+                actions.Should().BeEmpty();
         }
 
         private EmailConfig GetConfig()
