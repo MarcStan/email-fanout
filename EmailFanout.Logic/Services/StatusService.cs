@@ -43,13 +43,11 @@ namespace EmailFanout.Logic.Services
             return stati.ToDictionary(x => x.ActionId, x => x);
         }
 
-        public Task<StatusModel> UpdateAsync(EmailRequest request, EmailAction action, EmailFanoutStatus status, CancellationToken cancellationToken)
-            => UpdateAsync(request, action, status, false, cancellationToken);
-        public async Task<StatusModel> UpdateAsync(EmailRequest request, EmailAction action, EmailFanoutStatus status, bool @override, CancellationToken cancellationToken)
+        public async Task<StatusModel> UpdateAsync(EmailRequest request, EmailAction action, EmailFanoutStatus status, CancellationToken cancellationToken)
         {
             await _table.CreateIfNotExistsAsync(null, null, cancellationToken);
             var model = new StatusModel(request, action, status);
-            await _table.ExecuteAsync(@override ? TableOperation.InsertOrReplace(model) : TableOperation.Insert(model), null, null, cancellationToken);
+            await _table.ExecuteAsync(TableOperation.InsertOrReplace(model), null, null, cancellationToken);
             return model;
         }
     }

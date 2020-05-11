@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -58,7 +59,7 @@ namespace EmailFanout.Logic.Services
                     errors.Add(ex);
                     try
                     {
-                        await _statusService.UpdateAsync(request, action, EmailFanoutStatus.DeferredOrFailed, true, cancellationToken);
+                        await _statusService.UpdateAsync(request, action, EmailFanoutStatus.DeferredOrFailed, cancellationToken);
                     }
                     catch (Exception ex2)
                     {
@@ -96,6 +97,11 @@ namespace EmailFanout.Logic.Services
 
                         request.Body.Position = 0;
                         var r = await _httpClient.PostAsync(webhookUrl, request.Body, cancellationToken);
+                        if (r.StatusCode != HttpStatusCode.OK &&
+                            r.StatusCode != HttpStatusCode.Accepted)
+                        {
+                            throw new WebhookException($"Failed calling webhook {action.Id}");
+                        }
                     }
                     break;
                 case ActionType.Webhook:
@@ -118,6 +124,11 @@ namespace EmailFanout.Logic.Services
                                 null
                         };
                         var r = await _httpClient.PostAsync(webhookUrl, obj, cancellationToken);
+                        if (r.StatusCode != HttpStatusCode.OK &&
+                            r.StatusCode != HttpStatusCode.Accepted)
+                        {
+                            throw new WebhookException($"Failed calling webhook {action.Id}");
+                        }
                     }
                     break;
             }

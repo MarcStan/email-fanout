@@ -31,6 +31,7 @@ namespace EmailFanout
             builder.Services.AddSingleton<IEmailService, EmailService>();
             builder.Services.AddSingleton<IStatusService, StatusService>();
             builder.Services.AddSingleton<IConfigService, ConfigService>();
+            builder.Services.AddSingleton<IHttpClient, CustomHttpClient>();
             builder.Services.AddSingleton<ISendgridEmailParser, SendgridEmailParser>();
         }
     }
