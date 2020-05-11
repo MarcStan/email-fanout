@@ -1,0 +1,64 @@
+--xYzZY
+Content-Disposition: form-data; name="headers"
+
+From: sender@example.com <sender@example.com>
+To: "recipient@example.com" <recipient@example.com>
+Subject: Test 1
+Thread-Topic: Test 1
+Date: Mon, 11 May 2020 18:03:01 +0000
+Accept-Language: en-US
+Content-Language: en-US
+
+--xYzZY
+Content-Disposition: form-data; name="dkim"
+
+{@live.com : pass}
+--xYzZY
+Content-Disposition: form-data; name="to"
+
+"recipient@example.com" <recipient@example.com>
+--xYzZY
+Content-Disposition: form-data; name="html"
+
+<html>
+<head>
+</head>
+<body>
+Test message
+</body>
+</html>
+
+--xYzZY
+Content-Disposition: form-data; name="from"
+
+sender@example.com <sender@example.com>
+--xYzZY
+Content-Disposition: form-data; name="text"
+
+Test message
+
+--xYzZY
+Content-Disposition: form-data; name="sender_ip"
+
+40.92.65.107
+--xYzZY
+Content-Disposition: form-data; name="envelope"
+
+{"to":["recipient@example.com"],"from":"sender@example.com"}
+--xYzZY
+Content-Disposition: form-data; name="attachments"
+
+0
+--xYzZY
+Content-Disposition: form-data; name="subject"
+
+Test 1
+--xYzZY
+Content-Disposition: form-data; name="charsets"
+
+{"to":"UTF-8","html":"iso-8859-1","subject":"UTF-8","from":"UTF-8","text":"iso-8859-1"}
+--xYzZY
+Content-Disposition: form-data; name="SPF"
+
+pass
+--xYzZY--
