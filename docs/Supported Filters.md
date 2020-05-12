@@ -45,3 +45,30 @@ If one of them is matched the condition is assumed to be true.
 * `body contains` - checks if the body contains one of the strings
 * `subject/body contains` - checks if the subject or body contains one of the strings
 * `recipient contains` - checks if the recipient email/name contains one of the strings
+
+Each filer can also be inverted by prefixing `!`.
+
+`!sender contains` will match if the sender does not match all of the values.
+
+Inverted filters must use `allOf` instead of `oneOf`.
+
+Example:
+
+``` json
+{
+    "filters": [
+        {
+            "type": "!sender contains",
+            "allOf": [
+                "test@example.com",
+                "foo@example.com"
+            ]   
+        },
+    ],
+    "actions": [
+        ..
+    ]
+}
+```
+
+This filter will match only emails that are not sent by the emails `test@example.com` and `foo@example.com`.

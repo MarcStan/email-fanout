@@ -159,21 +159,34 @@ namespace EmailFanout.Logic.Services
         public static bool IsMatchedByFilter(Email mail, EmailFilter filter)
         {
             bool MatchAny(string text)
-                => text != null && filter.OneOf.Any(item => text.Contains(item));
+                => text != null && filter.OneOf.Any(item => text.IndexOf(item, StringComparison.OrdinalIgnoreCase) >= 0);
+            bool NotMatchAll(string text)
+                => text != null && filter.AllOf.All(item => text.IndexOf(item, StringComparison.OrdinalIgnoreCase) < 0);
 
             switch (filter.Type.ToLowerInvariant())
             {
                 case "sender contains":
                     return MatchAny(mail.From.Name) || MatchAny(mail.From.Email);
+                case "!sender contains":
+                    return NotMatchAll(mail.From.Name) && NotMatchAll(mail.From.Email);
                 case "subject contains":
                     return MatchAny(mail.Subject);
+                case "!subject contains":
+                    return NotMatchAll(mail.Subject);
                 case "body contains":
                     return MatchAny(mail.Text ?? mail.Html);
+                case "!body contains":
+                    return NotMatchAll(mail.Text ?? mail.Html);
                 case "subject/body contains":
                     return MatchAny(mail.Subject) || MatchAny(mail.Text ?? mail.Html);
+                case "!subject/body contains":
+                    return NotMatchAll(mail.Subject) && NotMatchAll(mail.Text ?? mail.Html);
                 case "recipient contains":
                     return mail.To.Any(to => MatchAny(to.Name) || MatchAny(to.Email)) ||
                         mail.Cc.Any(to => MatchAny(to.Name) || MatchAny(to.Email));
+                case "!recipient contains":
+                    return mail.To.Any(to => NotMatchAll(to.Name) && NotMatchAll(to.Email)) ||
+                        mail.Cc.Any(to => NotMatchAll(to.Name) && NotMatchAll(to.Email));
                 default:
                     throw new ArgumentOutOfRangeException($"Unsupported {filter.Type}");
             }

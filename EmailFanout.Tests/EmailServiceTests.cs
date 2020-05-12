@@ -494,6 +494,18 @@ namespace EmailFanout.Tests
         [TestCase("subject/body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("recipient contains", "recipient@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("recipient contains", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!sender contains", "sender@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!sender contains", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("!subject contains", "Test 1", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!subject contains", "Test 2", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("!body contains", "Test", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("!subject/body contains", "Test", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!subject/body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("!subject/body contains", "Test", "sender@example.com", "recipient@example.com", "Subject 1", "Test message", false)]
+        [TestCase("!subject/body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("!recipient contains", "recipient@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!recipient contains", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         public void Subject_filter_should_match_only_its_actions(string rule, string match, string sender, string recipient, string subject, string body, bool shouldMatch)
         {
             var parser = new SendgridEmailParser();
@@ -540,11 +552,47 @@ namespace EmailFanout.Tests
                 }
             };
 
+            if (rule.StartsWith("!"))
+            {
+                config.Rules[0].Filters[0].AllOf = config.Rules[0].Filters[0].OneOf;
+                config.Rules[0].Filters[0].OneOf = null;
+            }
+
             var actions = EmailService.ActionsToPerform(request.Email, config);
             if (shouldMatch)
                 actions.Select(a => a.Id).Should().ContainInOrder("notify-all");
             else
                 actions.Should().BeEmpty();
+        }
+
+
+        [Test]
+        public void Multiple_senders_should_not_match()
+        {
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+
+            var config = GetConfig();
+            config.Rules[0].Filters = new[]
+            {
+                new EmailFilter
+                {
+                    Type = "!sender contains",
+                    AllOf = new[]
+                    {
+                        "foo@example.com",
+                        "bar@example.com"
+                    }
+                }
+            };
+
+            request.Email.From.Email = "foo@example.com";
+            var actions = EmailService.ActionsToPerform(request.Email, config);
+            actions.Select(a => a.Id).Should().BeEmpty();
+
+            request.Email.From.Name = request.Email.From.Email = "allowed@example.com";
+            actions = EmailService.ActionsToPerform(request.Email, config);
+            actions.Select(a => a.Id).Should().ContainInOrder("forward-all", "notify-all");
         }
 
         private EmailConfig GetConfig()
