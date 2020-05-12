@@ -96,7 +96,7 @@ namespace EmailFanout.Logic.Services
                         var webhookUrl = await _keyVaultHelper.GetSecretAsync(secretName, cancellationToken);
 
                         request.Body.Position = 0;
-                        var r = await _httpClient.PostAsync(webhookUrl, request.Body, cancellationToken);
+                        var r = await _httpClient.PostStreamAsync(webhookUrl, request.Body, cancellationToken);
                         if (r.StatusCode != HttpStatusCode.OK &&
                             r.StatusCode != HttpStatusCode.Accepted)
                         {
