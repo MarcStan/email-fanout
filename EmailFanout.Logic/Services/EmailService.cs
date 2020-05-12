@@ -144,7 +144,7 @@ namespace EmailFanout.Logic.Services
                         var sendgridClient = new SendGridClient(sendgridKey);
                         var newLine = "\r\n";
                         if (!string.IsNullOrEmpty(request.Email.Html))
-                            newLine + = "<br>";
+                            newLine += "<br>";
                         var prefix = $"From: {request.Email.From.Email}";
                         if (request.Email.Cc.Any())
                             prefix += $"{newLine}CC: {string.Join(", ", request.Email.Cc.Select(x => x.Email))}";
