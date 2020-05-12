@@ -53,7 +53,7 @@ Attachments can either be kept or dropped (they are dropped by default).
 
 ``` json
 {
-    "type": "notify",
+    "type": "Webhook",
     "properties": {
         "webhook": {
             "secretName": "Webhook2"
@@ -84,3 +84,25 @@ The webhook url must be stored in a keyvault secret and the webhook must receive
     ]
 }
 ```
+
+## Email
+
+Send an actual email to a target using sendgrid.
+
+``` json
+{
+    "type": "Email",
+    "properties": {
+        "sendgrid": {
+            "secretName": "SendgridKey"
+        },
+        "targetEmail": "me@example.com"
+    }
+}
+```
+
+This will use sendgrid to relay the email to the provided address.
+
+It will spoof the sender to allow you to easily respond to the email (but beware that the email will likely be marked as spam).
+
+If you do not want the email to be spoofed, consider adding [email-relay](https://github.com/MarcStan/email-relay) as a webhook and have it relay the emails.

@@ -1,6 +1,8 @@
 ﻿using EmailFanout.Logic.Config;
 using EmailFanout.Logic.Models;
 using Newtonsoft.Json;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,7 +94,7 @@ namespace EmailFanout.Logic.Services
                     break;
                 case ActionType.Forward:
                     {
-                        var secretName = action.Properties.Property("webhook")?.Value?.ToObject<Webhook>()?.SecretName ?? throw new KeyNotFoundException($"Could not find secretName of webhook in action {action.Id}");
+                        var secretName = action.Properties.Property("webhook")?.Value?.ToObject<SecretObject>()?.SecretName ?? throw new KeyNotFoundException($"Could not find secretName of webhook in action {action.Id}");
                         var webhookUrl = await _keyVaultHelper.GetSecretAsync(secretName, cancellationToken);
 
                         request.Body.Position = 0;
@@ -106,7 +108,7 @@ namespace EmailFanout.Logic.Services
                     break;
                 case ActionType.Webhook:
                     {
-                        var secretName = action.Properties.Property("webhook")?.Value?.ToObject<Webhook>()?.SecretName ?? throw new KeyNotFoundException($"Could not find secretName of webhook in action {action.Id}");
+                        var secretName = action.Properties.Property("webhook")?.Value?.ToObject<SecretObject>()?.SecretName ?? throw new KeyNotFoundException($"Could not find secretName of webhook in action {action.Id}");
                         var webhookUrl = await _keyVaultHelper.GetSecretAsync(secretName, cancellationToken);
 
                         string Format(string text) => text
@@ -131,6 +133,38 @@ namespace EmailFanout.Logic.Services
                         }
                     }
                     break;
+                case ActionType.Email:
+                    {
+                        var secretName = action.Properties.Property("sendgrid")?.Value?.ToObject<SecretObject>()?.SecretName ?? throw new KeyNotFoundException($"Could not find secretName of email in action {action.Id}");
+                        var fromEmail = action.Properties.Property("fromEmail")?.Value?.ToString() ?? throw new KeyNotFoundException($"Could not find fromEmail of email in action {action.Id}");
+                        var targetEmail = action.Properties.Property("targetEmail")?.Value?.ToString() ?? throw new KeyNotFoundException($"Could not find targetEmail of email in action {action.Id}");
+
+                        var sendgridKey = await _keyVaultHelper.GetSecretAsync(secretName, cancellationToken);
+
+                        var sendgridClient = new SendGridClient(sendgridKey);
+                        var newLine = "\r\n";
+                        if (!string.IsNullOrEmpty(request.Email.Html))
+                            newLine + = "<br>";
+                        var prefix = $"From: {request.Email.From.Email}";
+                        if (request.Email.Cc.Any())
+                            prefix += $"{newLine}CC: {string.Join(", ", request.Email.Cc.Select(x => x.Email))}";
+                        prefix += newLine + "__________";
+                        var mail = MailHelper.CreateSingleEmail(new EmailAddress(fromEmail), new EmailAddress(targetEmail), request.Email.Subject, prefix + request.Email.Text, prefix + request.Email.Html);
+                        foreach (var attachment in request.Email.Attachments)
+                        {
+                            mail.AddAttachment(new Attachment
+                            {
+                                ContentId = attachment.ContentId,
+                                Content = attachment.Base64Data,
+                                Filename = attachment.FileName,
+                                Type = attachment.ContentType
+                            });
+                        }
+                        await sendgridClient.SendEmailAsync(mail, cancellationToken);
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException($"Unsupported type {action.Type}");
             }
         }
 
@@ -192,7 +226,7 @@ namespace EmailFanout.Logic.Services
             }
         }
 
-        private class Webhook
+        private class SecretObject
         {
             public string SecretName { get; set; }
         }
