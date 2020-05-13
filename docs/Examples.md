@@ -9,7 +9,9 @@ The fanout system then:
 * stores all emails in a storage account (both as a backup and in case the other systems have failures)
 * forwards all emails to my [email-relay](https://github.com/MarcStan/email-relay) which allows me to respond to emails from my private mail
 * forwards emails that where both sent by `me@<private>` and sent to `bugs@<domain>` to the [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker)
-* forwards emails sent by `matrix@<domain>` to a custom webhook (which in turn posts the messages to a matrix room)
+* forwards emails that where both sent by `me@<private>` and sent to `matrix@<domain>` to a custom webhook (which in turn posts the messages to a matrix room)
+  * Used incombination with an inbox forward rule i.e. I receive a specific email and forward it to the matrix inbox which then posts a message
+
 
 ``` json
 {
@@ -40,13 +42,13 @@ The fanout system then:
             "comment": "Bug tracking",
             "filters": [
                 {
-                    "type": "sender contains",
+                    "type": "sender equals",
                     "oneOf": [
                         "me@<private>"
                     ]
                 },
                 {
-                    "type": "recipient contains",
+                    "type": "recipient equals",
                     "oneOf": [
                         "bugs@<domain>"
                     ]
@@ -68,7 +70,13 @@ The fanout system then:
             "comment": "Matrix notifications",
             "filters": [
                 {
-                    "type": "sender contains",
+                    "type": "sender equals",
+                    "oneOf": [
+                        "me@<private>"
+                    ]
+                },
+                {
+                    "type": "recipient equals",
                     "oneOf": [
                         "matrix@<domain>"
                     ]

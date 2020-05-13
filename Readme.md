@@ -1,7 +1,5 @@
 # Sendgrid based fanout mechanism for incoming email
 
-:warning: WIP & largely untested.
-
 I have built multiple solutions that parse incoming emails to perform actions:
 
 - [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker) - Creates bug entries in Azure DevOps based on specially crafted emails
@@ -10,21 +8,21 @@ I have built multiple solutions that parse incoming emails to perform actions:
 
 # Problem
 
-Each service listens for incoming emails via the Sendgrid Inbound Parse feature.
+Each service separetly listens for incoming emails via the Sendgrid Inbound Parse feature but only one of these services can run on a domain at any point in time as sendgrid only allows one webhook per (sub)domain.
 
-But only one of these services can run on a domain at any point in time as sendgrid only allows one webhook per (sub)domain.
+My current workaround is to use a subdomain for each to set them all up (`<recipient>@example.com`, `<recipient>@bugs.example.com` & `<recipient>.matrix@example.com`).
 
-My current workaround is to use subdomains to set them all up (`<recipient>@example.com`, `<recipient>@bugs.example.com` & `<recipient>.matrix@example.com`).
-
-If it where possible to set multiple webhooks on a single domain I would have to adjust all my functions since they all report errors when invalid emails are received (and with these 3 functions 2/3 would always report errors as the email wasn't intended for them).
+Even if it where possible to set multiple webhooks on a single domain I would have to adjust all my functions since they all report errors when invalid emails are received (and with these 3 functions 2/3 would always report errors as the email wasn't intended for them; bug tracker expects a different format than the matrix bot, etc.).
 
 # Solution
 
-To receive emails on a single domain/address I built this Azure function based fanout system that can forward emails based on filters to the various other webhooks.
+To receive emails on a single domain/address with all these services I built this Azure function based fanout system that can sit in front of all of them and forward emails based on filters to each service.
 
 The function allows defining simple filters (much like a regular rule engine in email clients) and can forward email to other webhooks (such as the ones mentioned before).
 
 This allows me to receive all emails via this function and have it forward the email to the respective sub systems based on filters.
+
+I can even easily filter for "sender equals <me>" and only forward emails sent by me to a specific subsystem.
 
 See [Examples](docs/Examples.md) for more details.
 

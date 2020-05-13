@@ -194,15 +194,23 @@ namespace EmailFanout.Logic.Services
         {
             bool MatchAny(string text)
                 => text != null && filter.OneOf.Any(item => text.IndexOf(item, StringComparison.OrdinalIgnoreCase) >= 0);
+            bool EqualsAny(string text)
+                => text != null && filter.OneOf.Any(item => text.Equals(item, StringComparison.OrdinalIgnoreCase));
             bool NotMatchAll(string text)
                 => text != null && filter.AllOf.All(item => text.IndexOf(item, StringComparison.OrdinalIgnoreCase) < 0);
+            bool NotEqualsAll(string text)
+                => text != null && filter.AllOf.All(item => text.Equals(item, StringComparison.OrdinalIgnoreCase));
 
             switch (filter.Type.ToLowerInvariant())
             {
                 case "sender contains":
                     return MatchAny(mail.From.Name) || MatchAny(mail.From.Email);
+                case "sender equals":
+                    return EqualsAny(mail.From.Name) || EqualsAny(mail.From.Email);
                 case "!sender contains":
                     return NotMatchAll(mail.From.Name) && NotMatchAll(mail.From.Email);
+                case "!sender equals":
+                    return NotEqualsAll(mail.From.Name) && NotEqualsAll(mail.From.Email);
                 case "subject contains":
                     return MatchAny(mail.Subject);
                 case "!subject contains":
@@ -221,6 +229,12 @@ namespace EmailFanout.Logic.Services
                 case "!recipient contains":
                     return mail.To.Any(to => NotMatchAll(to.Name) && NotMatchAll(to.Email)) ||
                         mail.Cc.Any(to => NotMatchAll(to.Name) && NotMatchAll(to.Email));
+                case "recipient equals":
+                    return mail.To.Any(to => EqualsAny(to.Name) || EqualsAny(to.Email)) ||
+                        mail.Cc.Any(to => EqualsAny(to.Name) || EqualsAny(to.Email));
+                case "!recipient equals":
+                    return mail.To.Any(to => NotEqualsAll(to.Name) && NotEqualsAll(to.Email)) ||
+                        mail.Cc.Any(to => NotEqualsAll(to.Name) && NotEqualsAll(to.Email));
                 default:
                     throw new ArgumentOutOfRangeException($"Unsupported {filter.Type}");
             }

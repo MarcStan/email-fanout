@@ -484,6 +484,11 @@ namespace EmailFanout.Tests
 
         [TestCase("sender contains", "sender@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("sender contains", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("sender equals", "SENDER@example.com", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("sender equals", "sender@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("sender equals", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("!sender equals", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!sender equals", "SENDER@example.com", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("subject contains", "Test 1", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("subject contains", "Test 2", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("body contains", "Test", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
@@ -494,6 +499,13 @@ namespace EmailFanout.Tests
         [TestCase("subject/body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("recipient contains", "recipient@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("recipient contains", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!recipient contains", "recipient@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!recipient contains", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("recipient equals", "recipient@example.COM", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("recipient equals", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("recipient equals", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!recipient equals", "recipient@example.COM", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!recipient equals", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("!sender contains", "sender@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("!sender contains", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("!subject contains", "Test 1", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
@@ -504,8 +516,6 @@ namespace EmailFanout.Tests
         [TestCase("!subject/body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("!subject/body contains", "Test", "sender@example.com", "recipient@example.com", "Subject 1", "Test message", false)]
         [TestCase("!subject/body contains", "Test not", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
-        [TestCase("!recipient contains", "recipient@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
-        [TestCase("!recipient contains", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         public void Subject_filter_should_match_only_its_actions(string rule, string match, string sender, string recipient, string subject, string body, bool shouldMatch)
         {
             var parser = new SendgridEmailParser();
