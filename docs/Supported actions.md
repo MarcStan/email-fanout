@@ -102,6 +102,7 @@ Send an actual email to a target using sendgrid.
         "sendgrid": {
             "secretName": "SendgridKey"
         },
+        "fromEmail": "mail@<domain>",
         "targetEmail": "me@example.com"
     }
 }
@@ -109,6 +110,21 @@ Send an actual email to a target using sendgrid.
 
 This will use sendgrid to relay the email to the provided address.
 
-It will spoof the sender to allow you to easily respond to the email (but beware that the email will likely be marked as spam).
+It will do so by sending a new email from `fromEmail` and delivering it to `targetEmail`.
 
-If you do not want the email to be spoofed, consider adding [email-relay](https://github.com/MarcStan/email-relay) as a webhook and have it relay the emails.
+(Unfortunately sendgrid [doesn't](https://github.com/sendgrid/sendgrid-csharp/issues/890) support the [Sender vs. From distinction](https://stackoverflow.com/a/4728446) which would display the original sender via the `<fromEail> on behalf of <original sender>`).
+
+Instead the `Reply-To` field will be set to the original author mail. When you hit reply it will magically appear in the `to` field and you can easily respond to the email.
+
+A small change is made when CC addresses are used - as they can't be easily displayed in the CC field (without also sending them a copy of the email) they are instead prefixed in the body of the message:
+
+```
+CC: <possible@other.recipients>; <are@listed.here>
+__________
+%original content%
+```
+You will have to manually cut them and paste them in the CC line and remove the text from the email to properly respond to the email.
+
+___
+
+See [Supported filters](Supported%20filters.md) for a list of all possible filters.

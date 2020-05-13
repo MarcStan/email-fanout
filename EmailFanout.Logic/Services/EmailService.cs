@@ -142,14 +142,21 @@ namespace EmailFanout.Logic.Services
                         var sendgridKey = await _keyVaultHelper.GetSecretAsync(secretName, cancellationToken);
 
                         var sendgridClient = new SendGridClient(sendgridKey);
-                        var newLine = "\r\n";
-                        if (!string.IsNullOrEmpty(request.Email.Html))
-                            newLine += "<br>";
-                        var prefix = $"From: {request.Email.From.Email}";
-                        if (request.Email.Cc.Any())
-                            prefix += $"{newLine}CC: {string.Join(", ", request.Email.Cc.Select(x => x.Email))}";
-                        prefix += newLine + "__________";
+                        // only add section if CC emails exist
+                        var prefix = "";
+                        if (request.Email.Cc.Length > 0)
+                        {
+                            var newLine = "\r\n";
+                            if (!string.IsNullOrEmpty(request.Email.Html))
+                                newLine += "<br>";
+
+                            if (request.Email.Cc.Any())
+                                prefix += $"CC: {string.Join("; ", request.Email.Cc.Select(x => x.Email))}";
+                            prefix += newLine + "__________";
+                        }
                         var mail = MailHelper.CreateSingleEmail(new EmailAddress(fromEmail), new EmailAddress(targetEmail), request.Email.Subject, prefix + request.Email.Text, prefix + request.Email.Html);
+                        // causes the reply button to magically replace "fromEmail" with the email of the original author -> respond gets sent to the correct person
+                        mail.ReplyTo = request.Email.From;
                         foreach (var attachment in request.Email.Attachments)
                         {
                             mail.AddAttachment(new Attachment
