@@ -2,22 +2,23 @@
 
 Here is an example that is close to what I'm using in production:
 
-I set this function up as the main receiver of my domain and have it parse all emails.
+I set this function up as the Sendgrid Inbound Parse webhook of my domain and have it process all received emails.
 
-The fanout system then:
+I have then configured it to fanout my emails to these targets:
 
-* stores all emails in a storage account (both as a backup and in case the other systems have failures)
-* forwards all emails to a private inbox allowing convenient responses from the private email
-* forwards emails that where both sent by `me@<private>` and sent to `bugs@<domain>` to the [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker)
-* forwards emails that where both sent by `me@<private>` and sent to `matrix@<domain>` to a custom webhook (which in turn posts the messages to a matrix room)
-  * Used incombination with an inbox forward rule i.e. I receive a specific email and forward it to the matrix inbox which then posts a message
+* storage - stores all emails (both as a backup and in case the other systems have failures)
+* email - forwards all emails to a private inbox allowing convenient & direct response from the private email
+* bug tracking - forwards emails that where both sent by `me@example.com` and sent to `bugs@<domain>` to the [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker)
+* matrix notifications - forwards emails that where both sent by `me@example.com` and sent to `matrix@<domain>` to a custom webhook (which in turn posts the messages to a matrix room)
+  * Used in combination with an inbox forward rule i.e. I receive a specific email and forward it to the matrix inbox which then posts a message to a room
 
+The respective configuration looks like this:
 
 ``` json
 {
     "rules": [
         {
-            "comment": "Archive all emails",
+            "comment": "Archive all emails in storage",
             "filters": null,
             "actions": [
                 {
@@ -30,7 +31,7 @@ The fanout system then:
             ]
         },
         {
-            "comment": "Private inbox",
+            "comment": "Forward all emails to my private inbox",
             "filters": null,
             "actions": [
                 {
@@ -40,19 +41,19 @@ The fanout system then:
                         "sendgrid": {
                             "secretName": "SendgridKey"
                         },
-                        "fromEmail": "mail@<domain>",
+                        "domain": "<domain>",
                         "targetEmail": "me@example.com"
                     }
                 }
             ]
         }
         {
-            "comment": "Bug tracking",
+            "comment": "Forward my bug reports to the tracker",
             "filters": [
                 {
                     "type": "sender equals",
                     "oneOf": [
-                        "me@<private>"
+                        "me@example.com"
                     ]
                 },
                 {
@@ -75,12 +76,12 @@ The fanout system then:
             ]
         },
         {
-            "comment": "Matrix notifications",
+            "comment": "Post notifications about specific received emails in a matrix room",
             "filters": [
                 {
                     "type": "sender equals",
                     "oneOf": [
-                        "me@<private>"
+                        "me@example.com"
                     ]
                 },
                 {
@@ -92,7 +93,7 @@ The fanout system then:
             ],
             "actions": [
                 {
-                    "id": "notify-all",
+                    "id": "notify-mail",
                     "type": "Webhook",
                     "properties": {
                         "webhook": {

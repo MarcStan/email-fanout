@@ -1,48 +1,40 @@
-# Sendgrid based fanout mechanism for incoming email
+# Sendgrid based email receiver for incoming email (with fanout support)
 
-I have built multiple solutions that parse incoming emails to perform actions:
+I have built multiple solutions that parse incoming emails to perform actions (using the [Sendgrid Inbound Parse feature](https://sendgrid.com/docs/for-developers/parsing-email/inbound-email/)):
 
 - [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker) - Creates bug entries in Azure DevOps based on specially crafted emails
-- ~~[email-relay](https://github.com/MarcStan/email-relay) - Allows sending/receiving emails from your domains by (ab)using the SendGrid Inbound Parse feature~~ - Replaced by this function and its [Email action](docs/Supported%20actions.md#Email)
+- [email-relay](https://github.com/MarcStan/email-relay) - Allows sending/receiving emails from your domains by (ab)using the SendGrid Inbound Parse feature (although now largely replaced by this function and its [Email action](docs/Supported%20actions.md#Email))
 - matrix-email-bot - Forwards emails based on filter criteria to a [matrix room](https://matrix.org/try-now/) (to be opensourced in the future)
 
 # Problem
 
-Each service separetly listens for incoming emails via the Sendgrid Inbound Parse feature but only one of these services can run on a domain at any point in time as sendgrid only allows one webhook per (sub)domain.
+Each service separately listens for incoming emails via Sendgrid Inbound Parse but only one of these services can run on a domain at any point in time as sendgrid only allows one webhook per (sub)domain.
 
-My current workaround is to use a subdomain for each to set them all up (`<recipient>@example.com`, `<recipient>@bugs.example.com` & `<recipient>.matrix@example.com`).
+My current workaround is to use a subdomain for each to set them all up individually (e.g. `<recipient>@example.com`, `<recipient>@bugs.example.com` & `<recipient>.matrix@example.com`).
 
-Even if it where possible to set multiple webhooks on a single domain I would have to adjust all my functions since they all report errors when invalid emails are received (and with these 3 functions 2/3 would always report errors as the email wasn't intended for them; bug tracker expects a different format than the matrix bot, etc.).
+Even if it where possible to set multiple Inbound Parse webhooks on a single domain I would have to adjust all my functions since they all rely on specific formats (bug tracker expects a different format than the matrix bot and would likely crash on unrecognized format, etc.).
 
 # Solution
 
-To receive emails on a single domain/address with all these services I built this Azure function based fanout system that can sit in front of all of them and forward emails based on filters to each service.
+To receive emails on a single domain/address with all these services I built this Azure function based filtering & forwarding system that can fanout emails based on filters.
 
 The function allows defining simple filters (much like a regular rule engine in email clients) and can forward email to other webhooks (such as the ones mentioned before).
 
-This allows me to receive all emails via this function and have it forward the email to the respective sub systems based on filters.
+This allows me to receive all emails via this function and have it forward the email to the respective sub systems based on filters where necessary.
 
-I can even easily filter for "sender equals <me>" and only forward emails sent by me to a specific subsystem.
+E.g. I can easily filter for `sender equals <me> AND recipient equals bugs@<domain>` and only forward such emails to the [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker) whereas other mails are forwarded to other subsystems.
 
 See [Examples](docs/Examples.md) for more details.
 
-It also builds ontop of the Sendgrid [retry mechanism](https://sendgrid.com/docs/API_Reference/SMTP_API/errors_and_troubleshooting.html) (retry for 72 hours when error codes are received).
-
-See [Fault tolerance](docs/Fault%20tolerance.md) for more details.
-
 # Features
 
-* fanout emails to multiple webhooks
-* filtering to forward emails to specific targets only
-* retry & failsafe
+* forward emails to a separate inbox and easily reply to them
+* filtering & forwarding of emails to multiple webhooks/targets based on a simple rule engine
+* retry & failsafe to guarantee delivery to each webhook/target
+  * built on top of the Sendgrid [retry mechanism](https://sendgrid.com/docs/API_Reference/SMTP_API/errors_and_troubleshooting.html) (retry for 72 hours when error codes are received)
 * multiple supported targets and formats (webhook, storage account)
 
-___
-:warning: When setting mx record of your root domain to sendgrid **all** emails will be relayed through sendgrid. If you have a regular mail client, **it will no longer receive emails!**
-
-Additionally sendgrid free tier is limited to 100 mails per day (25000 mails per month if you signup via Azure) if this is not enough for you, consider a regular email service or the paid sendgrid plans.
-
-You can also chose to only enable this system on a subdomain (e.g. foo.example.com) but then only emails of that subdomain will be received (e.g. bar@foo.example.com).
+See [Fault tolerance](docs/Fault%20tolerance.md) for more details on retry behaviour.
 
 # Known issues
 
@@ -58,9 +50,15 @@ Deployment is fully automated via Github actions. Just [setup credentials](https
 
 See [Setup](docs/Setup.md) for more details.
 
+:warning: When setting mx record of your root domain to sendgrid **all** emails will be relayed through sendgrid. If you have a regular mail client, **it will no longer receive emails!**
+
+Additionally sendgrid free tier is limited to 100 mails per day (25000 mails per month if you signup via Azure) if this is not enough for you, consider a regular email service or the paid sendgrid plans.
+
+You can also chose to only enable this system on a subdomain (e.g. foo.example.com) but then only emails of that subdomain will be received (e.g. bar@foo.example.com).
+
 # Examples
 
-See [Examples](docs/Examples.md).
+See [Examples](docs/Examples.md) for my personal usecases.
 
 # Testing
 
