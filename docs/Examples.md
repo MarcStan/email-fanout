@@ -7,7 +7,7 @@ I set this function up as the main receiver of my domain and have it parse all e
 The fanout system then:
 
 * stores all emails in a storage account (both as a backup and in case the other systems have failures)
-* forwards all emails to my [email-relay](https://github.com/MarcStan/email-relay) which allows me to respond to emails from my private mail
+* forwards all emails to a private inbox allowing convenient responses from the private email
 * forwards emails that where both sent by `me@<private>` and sent to `bugs@<domain>` to the [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker)
 * forwards emails that where both sent by `me@<private>` and sent to `matrix@<domain>` to a custom webhook (which in turn posts the messages to a matrix room)
   * Used incombination with an inbox forward rule i.e. I receive a specific email and forward it to the matrix inbox which then posts a message
@@ -17,18 +17,9 @@ The fanout system then:
 {
     "rules": [
         {
-            "comment": "Forward all emails",
+            "comment": "Archive all emails",
             "filters": null,
             "actions": [
-                {
-                    "id": "forward-all",
-                    "type": "Forward",
-                    "properties": {
-                        "webhook": {
-                            "secretName": "EmailRelayWebhook"
-                        }
-                    }
-                },
                 {
                     "id": "archive-all",
                     "type": "Archive",
@@ -38,6 +29,23 @@ The fanout system then:
                 }
             ]
         },
+        {
+            "comment": "Private inbox",
+            "filters": null,
+            "actions": [
+                {
+                    "id": "private-email",
+                    "type": "Email",
+                    "properties": {
+                        "sendgrid": {
+                            "secretName": "SendgridKey"
+                        },
+                        "fromEmail": "mail@<domain>",
+                        "targetEmail": "me@example.com"
+                    }
+                }
+            ]
+        }
         {
             "comment": "Bug tracking",
             "filters": [

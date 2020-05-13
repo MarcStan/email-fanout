@@ -3,7 +3,7 @@
 I have built multiple solutions that parse incoming emails to perform actions:
 
 - [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker) - Creates bug entries in Azure DevOps based on specially crafted emails
-- [email-relay](https://github.com/MarcStan/email-relay) - Allows sending/receiving emails from your domains by (ab)using the SendGrid Inbound Parse feature
+- ~~[email-relay](https://github.com/MarcStan/email-relay) - Allows sending/receiving emails from your domains by (ab)using the SendGrid Inbound Parse feature~~ - Replaced by this function and its [Email action](docs/Supported%20actions.md#Email)
 - matrix-email-bot - Forwards emails based on filter criteria to a [matrix room](https://matrix.org/try-now/) (to be opensourced in the future)
 
 # Problem

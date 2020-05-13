@@ -14,6 +14,44 @@ The configuration supports an arbitrary amount of actions and the system interna
 
 Each action must have a unique id across the file and the id should not change for any action as it is used in case of retries (see [Fault tolerance](Fault%20tolerance.md)).
 
+## Email
+
+Send an actual email to a target using sendgrid.
+
+Allows easy forwarding of all emails received at a domain to a specifc private inbox without the need for a dedicated mail package at the domain (or to filter specific domain emails to various private inboxes).
+
+It even allows you to conveniently respond to emails.
+
+``` json
+{
+    "type": "Email",
+    "properties": {
+        "sendgrid": {
+            "secretName": "SendgridKey"
+        },
+        "fromEmail": "mail@<domain>",
+        "targetEmail": "me@example.com"
+    }
+}
+```
+
+This will use sendgrid to relay the email to the provided address.
+
+It will do so by sending a new email from `fromEmail` and delivering it to `targetEmail`.
+
+(Unfortunately sendgrid [doesn't](https://github.com/sendgrid/sendgrid-csharp/issues/890) support the [Sender vs. From distinction](https://stackoverflow.com/a/4728446) which would display the original sender via the `<fromEail> on behalf of <original sender>`).
+
+Instead the `Reply-To` field will be set to the original author mail. When you hit reply it will magically appear in the `to` field and you can easily respond to the email.
+
+A small change is made when CC addresses are used - as they can't be easily displayed in the CC field (without also sending them a copy of the email) they are instead prefixed in the body of the message:
+
+```
+CC: <possible@other.recipients>; <are@listed.here>
+__________
+%original content%
+```
+You will have to manually cut them and paste them in the CC line and remove the text from the email to properly respond to the email.
+
 ## Forward
 
 Forwards the email as is to another webhook. The other webhook can then parse the exact same sendgrid message anew.
@@ -90,41 +128,6 @@ The webhook url must be stored in a keyvault secret and the webhook must receive
     ]
 }
 ```
-
-## Email
-
-Send an actual email to a target using sendgrid.
-
-``` json
-{
-    "type": "Email",
-    "properties": {
-        "sendgrid": {
-            "secretName": "SendgridKey"
-        },
-        "fromEmail": "mail@<domain>",
-        "targetEmail": "me@example.com"
-    }
-}
-```
-
-This will use sendgrid to relay the email to the provided address.
-
-It will do so by sending a new email from `fromEmail` and delivering it to `targetEmail`.
-
-(Unfortunately sendgrid [doesn't](https://github.com/sendgrid/sendgrid-csharp/issues/890) support the [Sender vs. From distinction](https://stackoverflow.com/a/4728446) which would display the original sender via the `<fromEail> on behalf of <original sender>`).
-
-Instead the `Reply-To` field will be set to the original author mail. When you hit reply it will magically appear in the `to` field and you can easily respond to the email.
-
-A small change is made when CC addresses are used - as they can't be easily displayed in the CC field (without also sending them a copy of the email) they are instead prefixed in the body of the message:
-
-```
-CC: <possible@other.recipients>; <are@listed.here>
-__________
-%original content%
-```
-You will have to manually cut them and paste them in the CC line and remove the text from the email to properly respond to the email.
-
 ___
 
 See [Supported filters](Supported%20filters.md) for a list of all possible filters.
