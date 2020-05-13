@@ -206,7 +206,7 @@ namespace EmailFanout.Logic.Services
             bool NotMatchAll(string text)
                 => text != null && filter.AllOf.All(item => text.IndexOf(item, StringComparison.OrdinalIgnoreCase) < 0);
             bool NotEqualsAll(string text)
-                => text != null && filter.AllOf.All(item => text.Equals(item, StringComparison.OrdinalIgnoreCase));
+                => text != null && filter.AllOf.All(item => !text.Equals(item, StringComparison.OrdinalIgnoreCase));
 
             switch (filter.Type.ToLowerInvariant())
             {

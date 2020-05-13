@@ -487,7 +487,7 @@ namespace EmailFanout.Tests
         [TestCase("sender equals", "SENDER@example.com", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("sender equals", "sender@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("sender equals", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
-        [TestCase("!sender equals", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
+        [TestCase("!sender equals", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("!sender equals", "SENDER@example.com", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("subject contains", "Test 1", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("subject contains", "Test 2", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
@@ -505,7 +505,7 @@ namespace EmailFanout.Tests
         [TestCase("recipient equals", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("recipient equals", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("!recipient equals", "recipient@example.COM", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
-        [TestCase("!recipient equals", "not@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
+        [TestCase("!recipient equals", "recipient@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("!sender contains", "sender@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
         [TestCase("!sender contains", "sender2@", "sender@example.com", "recipient@example.com", "Test 1", "Test message", true)]
         [TestCase("!subject contains", "Test 1", "sender@example.com", "recipient@example.com", "Test 1", "Test message", false)]
@@ -574,7 +574,6 @@ namespace EmailFanout.Tests
             else
                 actions.Should().BeEmpty();
         }
-
 
         [Test]
         public void Multiple_senders_should_not_match()
