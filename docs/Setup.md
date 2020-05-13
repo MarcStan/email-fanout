@@ -34,7 +34,7 @@ The config file (`email-fanout.json`) looks like this:
 
 Each rule consists of the required property `actions`, an optional `filters` and you can use `comment` to include a an optional description for yourself.
 
-In the example above a single action is defined. It is of type `forward` and will be executed for each received email because `filters` is null.
+In the example above a single action is defined. It is of type `Forward` and will be executed for each received email because `filters` is null.
 
 Furthermore `secretName` defines the name of the variable in the keyvault that contains the webhook.
 
