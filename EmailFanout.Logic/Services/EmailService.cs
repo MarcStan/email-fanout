@@ -136,7 +136,7 @@ namespace EmailFanout.Logic.Services
                 case ActionType.Email:
                     {
                         var secretName = action.Properties.Property("sendgrid")?.Value?.ToObject<SecretObject>()?.SecretName ?? throw new KeyNotFoundException($"Could not find secretName of email in action {action.Id}");
-                        var fromEmail = action.Properties.Property("fromEmail")?.Value?.ToString() ?? throw new KeyNotFoundException($"Could not find fromEmail of email in action {action.Id}");
+                        var domain = action.Properties.Property("domain")?.Value?.ToString() ?? throw new KeyNotFoundException($"Could not find domain of email in action {action.Id}");
                         var targetEmail = action.Properties.Property("targetEmail")?.Value?.ToString() ?? throw new KeyNotFoundException($"Could not find targetEmail of email in action {action.Id}");
 
                         var sendgridKey = await _keyVaultHelper.GetSecretAsync(secretName, cancellationToken);
@@ -154,6 +154,15 @@ namespace EmailFanout.Logic.Services
                                 prefix += $"CC: {string.Join("; ", request.Email.Cc.Select(x => x.Email))}";
                             prefix += newLine + "__________";
                         }
+
+                        // mail can be sent to multiple targets - our domain may not be the first and may even appear multiple times (same address or various domain addresses)
+                        // -> match first with domain name
+                        var emails = request.Email.To.Select(e => e.Email)
+                            .Concat((request.Email.Cc ?? new EmailAddress[0]).Select(c => c.Email))
+                            .ToArray();
+
+                        domain = domain.StartsWith("@") ? domain.Substring(1) : domain;
+                        var fromEmail = emails.FirstOrDefault(e => e.EndsWith($"@{domain}", StringComparison.InvariantCultureIgnoreCase)) ?? $"unknown@{domain}";
                         var mail = MailHelper.CreateSingleEmail(new EmailAddress(fromEmail), new EmailAddress(targetEmail), request.Email.Subject, prefix + request.Email.Text, prefix + request.Email.Html);
                         // causes the reply button to magically replace "fromEmail" with the email of the original author -> respond gets sent to the correct person
                         mail.ReplyTo = request.Email.From;
