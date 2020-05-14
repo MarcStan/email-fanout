@@ -269,6 +269,50 @@ namespace EmailFanout.Tests
         }
 
         [Test]
+        public async Task Multiple_exceptions_should_be_aggregated_when_more_than_one_service_fails()
+        {
+            var status = new Mock<IStatusService>();
+            var vault = new Mock<IKeyVaultHelper>();
+            var config = new Mock<IConfigService>();
+            var storage = new Mock<IBlobStorageService>();
+            var http = new Mock<IHttpClient>();
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+
+            status.Setup(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, StatusModel>());
+            config.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(GetConfig());
+
+            vault.Setup(x => x.GetSecretAsync("Webhook1", It.IsAny<CancellationToken>()))
+                .Throws(new WebException("pretent secret not found"));
+
+            vault.Setup(x => x.GetSecretAsync("Webhook2", It.IsAny<CancellationToken>()))
+                .ReturnsAsync("url2");
+
+            http.Setup(x => x.PostAsync("url2", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+                .Throws(new WebException("pretent secret not reachable"));
+
+            var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
+
+            try
+            {
+                await service.ProcessMailAsync(request, CancellationToken.None);
+                Assert.Fail();
+            }
+            catch (AggregateException ex)
+            {
+                // expected due to action failure
+                ex.InnerExceptions.Count.Should().Be(2, "because two services failed");
+            }
+
+            status.Verify(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()));
+            status.Verify(x => x.UpdateAsync(request, It.Is<EmailAction>(a => a.Id == "forward-all"), EmailFanoutStatus.DeferredOrFailed, It.IsAny<CancellationToken>()));
+            status.Verify(x => x.UpdateAsync(request, It.Is<EmailAction>(a => a.Id == "notify-all"), EmailFanoutStatus.DeferredOrFailed, It.IsAny<CancellationToken>()));
+            status.VerifyNoOtherCalls();
+        }
+
+        [Test]
         public async Task Retry_should_only_invoke_non_successful_actions()
         {
             var status = new Mock<IStatusService>();

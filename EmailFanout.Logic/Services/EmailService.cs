@@ -39,8 +39,7 @@ namespace EmailFanout.Logic.Services
             var existingEntries = await _statusService.GetStatiAsync(request, cancellationToken);
             var config = await _configService.LoadAsync(cancellationToken);
 
-            var errors = new List<Exception>();
-            foreach (var action in ActionsToPerform(request.Email, config))
+            var tasks = Task.WhenAll(ActionsToPerform(request.Email, config).Select(async action =>
             {
                 try
                 {
@@ -50,28 +49,30 @@ namespace EmailFanout.Logic.Services
                         existingEntries[action.Id].GetStatus() == EmailFanoutStatus.Completed)
                     {
                         // this email has already been successfully delivered to the target
-                        continue;
+                        return;
                     }
 
                     await ProcessAsync(request, action, cancellationToken);
                     await _statusService.UpdateAsync(request, action, EmailFanoutStatus.Completed, cancellationToken);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    errors.Add(ex);
-                    try
-                    {
-                        await _statusService.UpdateAsync(request, action, EmailFanoutStatus.DeferredOrFailed, cancellationToken);
-                    }
-                    catch (Exception ex2)
-                    {
-                        errors.Add(ex2);
-                        // continue to process other actions
-                    }
+                    await _statusService.UpdateAsync(request, action, EmailFanoutStatus.DeferredOrFailed, cancellationToken);
+                    throw;
                 }
+            }));
+            try
+            {
+                await tasks;
             }
-            if (errors.Count > 0)
-                throw new AggregateException("Failed processing mail ", errors);
+            catch (Exception)
+            {
+                // only first exception is throw, bubble up the aggregated exception
+                throw tasks.Exception;
+            }
+            // is this even possible ?
+            if (tasks.Exception != null)
+                throw tasks.Exception;
 
             return true;
         }
@@ -90,7 +91,11 @@ namespace EmailFanout.Logic.Services
                     var containerName = action.Properties.Property("containerName").Value.ToString();
                     await _blobStorageService.UploadAsync(containerName, name, JsonConvert.SerializeObject(request.Email, Formatting.Indented), cancellationToken);
                     // save all attachments in subfolder
-                    await Task.WhenAll(request.Email.Attachments.Select(a => _blobStorageService.UploadAsync(containerName, $"{id} (Attachments)/{a.FileName}", Convert.FromBase64String(a.Base64Data), cancellationToken)));
+                    var tasks = Task.WhenAll(request.Email.Attachments.Select(a => _blobStorageService.UploadAsync(containerName, $"{id} (Attachments)/{a.FileName}", Convert.FromBase64String(a.Base64Data), cancellationToken)));
+                    await tasks;
+                    if (tasks.Exception != null)
+                        throw tasks.Exception;
+
                     break;
                 case ActionType.Forward:
                     {
