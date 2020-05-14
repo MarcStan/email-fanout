@@ -9,6 +9,6 @@ namespace EmailFanout.Logic
 
         Task UploadAsync(string containerName, string blobName, byte[] data, CancellationToken cancellationToken);
 
-        Task<string> DownloadAsync(string containerName, string v, CancellationToken cancellationToken);
+        Task<string> DownloadAsync(string containerName, string blobName, CancellationToken cancellationToken);
     }
 }

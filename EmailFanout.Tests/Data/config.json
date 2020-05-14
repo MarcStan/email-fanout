@@ -1,0 +1,25 @@
+{
+  "rules": [
+    {
+      "filters": null,
+      "actions": [
+        {
+          "id": "archive-all",
+          "type": "Archive",
+          "properties": {
+            "containerName": "backup"
+          }
+        },
+        {
+          "id": "forward-all",
+          "type": "Forward",
+          "properties": {
+            "webhook": {
+              "secretName": "Webhook1"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
