@@ -1,5 +1,5 @@
 ﻿using EmailFanout.Logic.Config;
-using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.Azure.Cosmos.Table;
 using System;
 
 namespace EmailFanout.Logic.Models

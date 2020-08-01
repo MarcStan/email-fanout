@@ -1,8 +1,7 @@
 ﻿using EmailFanout.Logic.Config;
 using EmailFanout.Logic.Models;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Configuration;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Table;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
