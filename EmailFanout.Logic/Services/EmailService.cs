@@ -119,18 +119,13 @@ namespace EmailFanout.Logic.Services
                         string Format(string text) => text
                             .Replace("%sender%", request.Email.From.Email)
                             .Replace("%subject%", request.Email.Subject)
-                            .Replace("%body%", request.Email.Text ?? request.Email.Html);
+                            .Replace("%body%", request.Email.Text ?? request.Email.Html)
+                            .Replace("\"%attachments%\"", request.Email.Attachments != null ? JsonConvert.SerializeObject(request.Email.Attachments) : "null");
 
-                        var obj = new
-                        {
-                            sender = Format(action.Properties.Property("sender")?.Value?.ToString() ?? request.Email.From.Email),
-                            subject = Format(action.Properties.Property("subject")?.Value?.ToString() ?? request.Email.Subject),
-                            body = Format(action.Properties.Property("body")?.Value?.ToString() ?? request.Email.Text ?? request.Email.Html),
-                            attachments = "keep".Equals(action.Properties.Property("attachments")?.Value?.ToString(), StringComparison.OrdinalIgnoreCase) ?
-                                request.Email.Attachments :
-                                null
-                        };
-                        var r = await _httpClient.PostAsync(webhookUrl, obj, cancellationToken);
+                        var json = action.Properties.Property("body")?.Value?.ToString();
+                        json = Format(json);
+
+                        var r = await _httpClient.PostAsync(webhookUrl, json, cancellationToken);
                         if (r.StatusCode != HttpStatusCode.OK &&
                             r.StatusCode != HttpStatusCode.Accepted)
                         {

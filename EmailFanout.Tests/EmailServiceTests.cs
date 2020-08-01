@@ -40,9 +40,9 @@ namespace EmailFanout.Tests
             vault.Setup(x => x.GetSecretAsync("Webhook2", It.IsAny<CancellationToken>()))
                 .ReturnsAsync("url2");
 
-            http.Setup(x => x.PostStreamAsync("url1", It.IsAny<MemoryStream>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url1"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
-            http.Setup(x => x.PostAsync("url2", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url2"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
             var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
@@ -80,7 +80,11 @@ namespace EmailFanout.Tests
                     {
                         webhook = new
                         {
-                            secretName = "Webhook1"
+                            secretName = "Webhook1",
+                            body = new
+                            {
+                                sender = "%sender%"
+                            }
                         }
                     })
                 },
@@ -94,8 +98,11 @@ namespace EmailFanout.Tests
                         {
                             secretName = "Webhook2"
                         },
-                        subject = "You've got mail!",
-                        body ="%subject%"
+                        body = new
+                        {
+                            subject = "You've got mail!",
+                            body ="%subject%"
+                        }
                     })
                 },
                 new EmailAction
@@ -119,9 +126,9 @@ namespace EmailFanout.Tests
             vault.Setup(x => x.GetSecretAsync("Webhook2", It.IsAny<CancellationToken>()))
                     .ReturnsAsync("url2");
 
-            http.Setup(x => x.PostStreamAsync("url1", It.IsAny<MemoryStream>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url1"), It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
-            http.Setup(x => x.PostAsync("url2", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url2"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
             var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
@@ -163,7 +170,11 @@ namespace EmailFanout.Tests
                     {
                         webhook = new
                         {
-                            secretName = "Webhook1"
+                            secretName = "Webhook1",
+                            body = new
+                            {
+                                sender = "%sender%"
+                            }
                         }
                     })
                 },
@@ -177,8 +188,11 @@ namespace EmailFanout.Tests
                         {
                             secretName = "Webhook2"
                         },
-                        subject = "You've got mail!",
-                        body ="%subject%"
+                        body = new
+                        {
+                            subject = "You've got mail!",
+                            body ="%subject%"
+                        }
                     })
                 },
                 new EmailAction
@@ -204,9 +218,9 @@ namespace EmailFanout.Tests
             vault.Setup(x => x.GetSecretAsync("Webhook2", It.IsAny<CancellationToken>()))
                     .ReturnsAsync("url2");
 
-            http.Setup(x => x.PostStreamAsync("url1", It.IsAny<MemoryStream>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url1"), It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
-            http.Setup(x => x.PostAsync("url2", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url2"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
             var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
@@ -247,7 +261,7 @@ namespace EmailFanout.Tests
             vault.Setup(x => x.GetSecretAsync("Webhook2", It.IsAny<CancellationToken>()))
                 .ReturnsAsync("url2");
 
-            http.Setup(x => x.PostAsync("url2", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url2"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
             var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
@@ -290,7 +304,7 @@ namespace EmailFanout.Tests
             vault.Setup(x => x.GetSecretAsync("Webhook2", It.IsAny<CancellationToken>()))
                 .ReturnsAsync("url2");
 
-            http.Setup(x => x.PostAsync("url2", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url2"), It.IsAny<CancellationToken>()))
                 .Throws(new WebException("pretent secret not reachable"));
 
             var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
@@ -344,7 +358,7 @@ namespace EmailFanout.Tests
             vault.Setup(x => x.GetSecretAsync("Webhook1", It.IsAny<CancellationToken>()))
                 .ReturnsAsync("url1");
 
-            http.Setup(x => x.PostStreamAsync("url1", It.IsAny<MemoryStream>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url1"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
             var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
@@ -405,9 +419,9 @@ namespace EmailFanout.Tests
             vault.Setup(x => x.GetSecretAsync("Webhook2", It.IsAny<CancellationToken>()))
                 .ReturnsAsync("url2");
 
-            http.Setup(x => x.PostStreamAsync("url1", It.IsAny<MemoryStream>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url1"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
-            http.Setup(x => x.PostAsync("url2", It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url2"), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
 
             var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);

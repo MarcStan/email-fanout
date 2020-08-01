@@ -95,12 +95,15 @@ Attachments are stored in subdirectories named identical to the json file (`yyyy
 
 ## Webhook
 
-When a specific email is received a notification is sent to a webhook. The webhook format is much simpler than the one from [Forward](#Forward) saving the recipient the hassle of parsing the sendgrid format.
+When a specific email is received a notification is sent to a webhook. The webhook format is much simpler and mroe flexible than the one from [Forward](#Forward) saving the recipient the hassle of parsing the sendgrid format.
 
 Content of the original email can be inserted with `%subject%`, `%sender%` and `%body%` placeholders allowing for some basic transformations.
 
-Attachments can either be kept or dropped (they are dropped by default).
+Attachments can be added by adding `"%attachments%"`. Note the extra "" that are required and will also be replaced by the attachment array (required so the original part is valid json as well).
 
+Lastly the webhook url must be stored in a keyvault secret and the target webhook must receive POST requests.
+
+A webhook defined like so:
 ``` json
 {
     "type": "Webhook",
@@ -108,21 +111,22 @@ Attachments can either be kept or dropped (they are dropped by default).
         "webhook": {
             "secretName": "Webhook2"
         },
-        "subject": "Notification",
-        "body": "Email from %sender% regarding '%subject%'",
-        "sender": "sender was %sender%",
-        "attachments": "keep|drop"
+        "body": {
+            "subject": "Notification",
+            "body": "Email from %sender% regarding '%subject%'",
+            "sender": "sender was %sender%",
+            "attachments": "%attachments%"
+        }
     }
 }
 ```
-
-The webhook url must be stored in a keyvault secret and the target webhook must receive POST requests and can expect the following format:
+will result in this body being sent (the content of `body` is essentially freeform json that you can customize to fit your endpoint):
 
 ``` json
 {
-    "sender": "name/email",
-    "subject": "foo",
-    "body": "bar",
+    "sender": "Sender was name/email",
+    "subject": "Notification",
+    "body": "Email from name/email refarding 'Notification'",
     "attachments": [
         {
             "id": "",
@@ -135,5 +139,6 @@ The webhook url must be stored in a keyvault secret and the target webhook must 
 }
 ```
 ___
+
 
 See [Supported filters](Supported%20filters.md) for a list of all possible filters.

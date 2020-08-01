@@ -70,6 +70,11 @@ The respective configuration looks like this:
                     "properties": {
                         "webhook": {
                             "secretName": "BugTrackerWebhook"
+                        },
+                        "body": {
+                            "subject": "%subject%",
+                            "body": "%body%",
+                            "attachments": "%attachments%"
                         }
                     }
                 }
@@ -99,8 +104,10 @@ The respective configuration looks like this:
                         "webhook": {
                             "secretName": "MatrixWebhook"
                         },
-                        "subject": "You've got mail!",
-                        "body": "%subject%"
+                        "body": {
+                            "subject": "You've got mail!",
+                            "body": "%subject%"
+                        }
                     }
                 }
             ]

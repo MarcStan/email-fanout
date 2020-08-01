@@ -67,3 +67,7 @@ See [Examples](docs/Examples.md) for my personal usecases.
 Once the azure function is hooked up, all you have to do is send an email to your domain.
 
 The email should then be stored in the storage account or relayed to the target webhooks (depending on your setup) within ~10 seconds.
+
+# Changelog
+
+Changelog is [here](docs/Changelog.md).
