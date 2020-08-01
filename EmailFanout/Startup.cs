@@ -1,12 +1,12 @@
 ﻿using EmailFanout;
 using EmailFanout.Logic;
 using EmailFanout.Logic.Services;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.WindowsAzure.Storage;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 namespace EmailFanout
@@ -19,6 +19,11 @@ namespace EmailFanout
             {
                 var connectionString = p.GetRequiredService<IConfiguration>()["AzureWebJobsStorage"];
                 return CloudStorageAccount.Parse(connectionString);
+            });
+            builder.Services.AddSingleton(p =>
+            {
+                var connectionString = p.GetRequiredService<IConfiguration>()["AzureWebJobsStorage"];
+                return Microsoft.Azure.Storage.CloudStorageAccount.Parse(connectionString);
             });
 
             builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
