@@ -18,6 +18,8 @@ Even if it where possible to set multiple Inbound Parse webhooks on a single dom
 
 To receive emails on a single domain/address with all these services I built this Azure function based filtering & forwarding system that can fanout emails based on filters.
 
+![fanout diagram](docs/email-fanout.png)
+
 The function allows defining simple filters (much like a regular rule engine in email clients) and can forward email to other webhooks (such as the ones mentioned before).
 
 This allows me to receive all emails via this function and have it forward the email to the respective sub systems based on filters where necessary.
