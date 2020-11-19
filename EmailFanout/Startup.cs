@@ -40,7 +40,7 @@ namespace EmailFanout
                 var keyVaultName = p.GetRequiredService<IConfiguration>()["KeyVaultName"];
                 return new SecretClient(new Uri($"https://{keyVaultName}.vault.azure.net"), new DefaultAzureCredential(options));
             });
-            builder.Services.AddSingleton<KeyVaultHelper>();
+            builder.Services.AddSingleton<IKeyVaultHelper, KeyVaultHelper>();
             builder.Services.AddSingleton<IEmailService, EmailService>();
             builder.Services.AddSingleton<IStatusService, StatusService>();
             builder.Services.AddSingleton<IConfigService, ConfigService>();
