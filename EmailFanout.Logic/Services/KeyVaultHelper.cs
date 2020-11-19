@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.KeyVault;
+﻿using Azure.Security.KeyVault.Secrets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -6,19 +6,17 @@ namespace EmailFanout.Logic.Services
 {
     public class KeyVaultHelper : IKeyVaultHelper
     {
-        private IKeyVaultClient _keyVaultClient;
-        private readonly string _keyVaultUrl;
+        private SecretClient _secretClient;
 
-        public KeyVaultHelper(IKeyVaultClient keyVaultClient, string keyVaultName)
+        public KeyVaultHelper(SecretClient secretClient)
         {
-            _keyVaultClient = keyVaultClient;
-            _keyVaultUrl = $"https://{keyVaultName}.vault.azure.net";
+            _secretClient = secretClient;
         }
 
         public async Task<string> GetSecretAsync(string secretName, CancellationToken cancellationToken)
         {
-            var secret = await _keyVaultClient.GetSecretAsync(_keyVaultUrl, secretName, cancellationToken);
-            return secret.Value;
+            var secret = await _secretClient.GetSecretAsync(secretName, null, cancellationToken);
+            return secret.Value.Value;
         }
     }
 }

@@ -1,12 +1,13 @@
-﻿using EmailFanout;
+﻿using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
+using EmailFanout;
 using EmailFanout.Logic;
 using EmailFanout.Logic.Services;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 [assembly: FunctionsStartup(typeof(Startup))]
 namespace EmailFanout
@@ -27,12 +28,19 @@ namespace EmailFanout
             });
 
             builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
-            builder.Services.AddSingleton<IKeyVaultHelper>(p =>
+            builder.Services.AddSingleton(p =>
             {
+                var options =
+#if DEBUG
+                // workaround for MSA account & Visual Studio not working in 1.3: https://github.com/Azure/azure-sdk-for-net/issues/16306#issuecomment-724189313
+                new DefaultAzureCredentialOptions { ExcludeVisualStudioCredential = true, ExcludeSharedTokenCacheCredential = true };
+#else
+                new DefaultAzureCredentialOptions();
+#endif
                 var keyVaultName = p.GetRequiredService<IConfiguration>()["KeyVaultName"];
-                var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(new AzureServiceTokenProvider().KeyVaultTokenCallback));
-                return new KeyVaultHelper(keyVaultClient, keyVaultName);
+                return new SecretClient(new Uri($"https://{keyVaultName}.vault.azure.net"), new DefaultAzureCredential(options));
             });
+            builder.Services.AddSingleton<KeyVaultHelper>();
             builder.Services.AddSingleton<IEmailService, EmailService>();
             builder.Services.AddSingleton<IStatusService, StatusService>();
             builder.Services.AddSingleton<IConfigService, ConfigService>();
