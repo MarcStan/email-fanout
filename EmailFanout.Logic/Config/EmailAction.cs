@@ -5,6 +5,8 @@ namespace EmailFanout.Logic.Config
 {
     public class EmailAction
     {
+        public bool Enabled { get; set; } = true;
+
         public string Id { get; set; }
 
         public ActionType Type { get; set; }

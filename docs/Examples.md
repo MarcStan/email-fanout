@@ -18,7 +18,7 @@ The respective configuration looks like this:
 {
     "rules": [
         {
-            "comment": "Archive all emails in storage",
+            "_comment": "Archive all emails in storage",
             "filters": null,
             "actions": [
                 {
@@ -31,7 +31,7 @@ The respective configuration looks like this:
             ]
         },
         {
-            "comment": "Forward all emails to my private inbox",
+            "_comment": "Forward all emails to my private inbox",
             "filters": null,
             "actions": [
                 {
@@ -48,7 +48,7 @@ The respective configuration looks like this:
             ]
         }
         {
-            "comment": "Forward my bug reports to the tracker",
+            "_comment": "Forward my bug reports to the tracker",
             "filters": [
                 {
                     "type": "sender equals",
@@ -81,7 +81,7 @@ The respective configuration looks like this:
             ]
         },
         {
-            "comment": "Post notifications about specific received emails in a matrix room",
+            "_comment": "Post notifications about specific received emails in a matrix room",
             "filters": [
                 {
                     "type": "sender equals",

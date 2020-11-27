@@ -10,6 +10,8 @@ ___
 
 Actions are defined by the `type`, `id` and custom `properties`.
 
+Like the rules the optional field `enabled` is also supported and defaults to `true` if not set. It can be used to disable individual actions without having to delete them from the config.
+
 The configuration supports an arbitrary amount of actions with various filters and the system internally takes care of delivering the emails to each.
 
 Each action must have a unique id across the entire file and the id should never change for an action as the id is to track retries in case of failures (see [Fault tolerance](Fault%20tolerance.md)).
@@ -124,9 +126,9 @@ will result in this body being sent (the content of `body` is essentially freefo
 
 ``` json
 {
-    "sender": "Sender was name/email",
     "subject": "Notification",
     "body": "Email from name/email refarding 'Notification'",
+    "sender": "Sender was name/email",
     "attachments": [
         {
             "id": "",

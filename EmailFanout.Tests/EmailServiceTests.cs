@@ -436,6 +436,190 @@ namespace EmailFanout.Tests
         }
 
         [Test]
+        public async Task Service_should_ignore_disabled_filter_and_run_action()
+        {
+            var status = new Mock<IStatusService>();
+            var vault = new Mock<IKeyVaultHelper>();
+            var config = new Mock<IConfigService>();
+            var storage = new Mock<IBlobStorageService>();
+            var http = new Mock<IHttpClient>();
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+
+            status.Setup(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, StatusModel>());
+            var cfg = GetConfig();
+            cfg.Rules = new[]
+            {
+                new EmailRule
+                {
+                    Filters = new []
+                    {
+                        new EmailFilter
+                        {
+                            Enabled = false,
+                            Type = "subject contains",
+                            OneOf = new[]
+                            {
+                                "not found"
+                            }
+                        }
+                    },
+                    Actions = new[]
+                    {
+                        new EmailAction
+                        {
+                            Id = "executed",
+                            Type = ActionType.Forward,
+                            Properties = JObject.FromObject(new
+                            {
+                                webhook = new
+                                {
+                                    secretName = "fwd"
+                                }
+                            })
+                        }
+                    }
+                }
+            };
+            config.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(cfg);
+
+            vault.Setup(x => x.GetSecretAsync("fwd", It.IsAny<CancellationToken>()))
+                .ReturnsAsync("url1");
+
+            http.Setup(x => x.SendAsync(It.Is<HttpRequestMessage>(r => r.RequestUri.ToString() == "url1"), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+            var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
+
+            var success = await service.ProcessMailAsync(request, CancellationToken.None);
+            success.Should().BeTrue();
+
+            status.Verify(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()));
+            status.Verify(x => x.UpdateAsync(request, It.Is<EmailAction>(a => a.Id == "executed"), EmailFanoutStatus.Completed, It.IsAny<CancellationToken>()));
+            status.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task Service_should_ignore_disabled_action()
+        {
+            var status = new Mock<IStatusService>();
+            var vault = new Mock<IKeyVaultHelper>();
+            var config = new Mock<IConfigService>();
+            var storage = new Mock<IBlobStorageService>();
+            var http = new Mock<IHttpClient>();
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+
+            status.Setup(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, StatusModel>());
+            var cfg = GetConfig();
+            cfg.Rules = new[]
+            {
+                new EmailRule
+                {
+                    Filters = new []
+                    {
+                        new EmailFilter
+                        {
+                            Type = "subject contains",
+                            OneOf = new[]
+                            {
+                                "not found"
+                            }
+                        }
+                    },
+                    Actions = new[]
+                    {
+                        new EmailAction
+                        {
+                            Enabled = false,
+                            Id = "executed",
+                            Type = ActionType.Forward,
+                            Properties = JObject.FromObject(new
+                            {
+                                webhook = new
+                                {
+                                    secretName = "fwd"
+                                }
+                            })
+                        }
+                    }
+                }
+            };
+            config.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(cfg);
+
+            var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
+
+            var success = await service.ProcessMailAsync(request, CancellationToken.None);
+            success.Should().BeTrue();
+
+            status.Verify(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()));
+            status.VerifyNoOtherCalls();
+        }
+
+        [Test]
+        public async Task Service_should_ignore_disabled_rule_entirely()
+        {
+            var status = new Mock<IStatusService>();
+            var vault = new Mock<IKeyVaultHelper>();
+            var config = new Mock<IConfigService>();
+            var storage = new Mock<IBlobStorageService>();
+            var http = new Mock<IHttpClient>();
+            var parser = new SendgridEmailParser();
+            var request = EmailRequest.Parse(Load("mail.txt"), parser);
+
+            status.Setup(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<string, StatusModel>());
+            var cfg = GetConfig();
+            cfg.Rules = new[]
+            {
+                new EmailRule
+                {
+                    Enabled = false,
+                    Filters = new []
+                    {
+                        new EmailFilter
+                        {
+                            Type = "subject contains",
+                            OneOf = new[]
+                            {
+                                "not found"
+                            }
+                        }
+                    },
+                    Actions = new[]
+                    {
+                        new EmailAction
+                        {
+                            Id = "executed",
+                            Type = ActionType.Forward,
+                            Properties = JObject.FromObject(new
+                            {
+                                webhook = new
+                                {
+                                    secretName = "fwd"
+                                }
+                            })
+                        }
+                    }
+                }
+            };
+            config.Setup(x => x.LoadAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(cfg);
+
+            var service = new EmailService(status.Object, vault.Object, config.Object, storage.Object, http.Object);
+
+            var success = await service.ProcessMailAsync(request, CancellationToken.None);
+            success.Should().BeTrue();
+
+            status.Verify(x => x.GetStatiAsync(request, It.IsAny<CancellationToken>()));
+            status.VerifyNoOtherCalls();
+        }
+
+        [Test]
         public async Task Should_be_successful_even_if_all_filtered()
         {
             var status = new Mock<IStatusService>();

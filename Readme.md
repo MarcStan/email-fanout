@@ -6,6 +6,17 @@ I have built multiple solutions that parse incoming emails to perform actions (u
 - [email-relay](https://github.com/MarcStan/email-relay) - Allows sending/receiving emails from your domains by (ab)using the SendGrid Inbound Parse feature (although now largely replaced by this function and its [Email action](docs/Supported%20actions.md#Email))
 - [rss-notify](https://github.com/MarcStan/rss-notify) - Forwards notifications about rss subscriptions to a [matrix room](https://matrix.org/try-now/)
 
+# Features
+
+* catch-all email for a custom domain and forward to a single inbox
+* forward emails to a separate inbox based on rules and easily reply to them
+* filtering & forwarding of emails to multiple webhooks/targets based on a simple rule engine allows *fanout* of emails
+* retry & failsafe to guarantee delivery to each webhook/target
+  * built on top of the Sendgrid [retry mechanism](https://sendgrid.com/docs/API_Reference/SMTP_API/errors_and_troubleshooting.html) (retry for 72 hours when error codes are received)
+* multiple supported targets and formats (webhook, storage account)
+
+See [Fault tolerance](docs/Fault%20tolerance.md) for more details on retry behaviour.
+
 # Problem
 
 Each service separately listens for incoming emails via Sendgrid Inbound Parse but only one of these services can run on a domain at any point in time as sendgrid only allows one webhook per (sub)domain.
@@ -27,16 +38,6 @@ This allows me to receive all emails via this function and have it forward the e
 E.g. I can easily filter for `sender equals <me> AND recipient equals bugs@<domain>` and only forward such emails to the [email-bug-tracker](https://github.com/MarcStan/email-bug-tracker) whereas other mails are forwarded to other subsystems.
 
 See [Examples](docs/Examples.md) for more details.
-
-# Features
-
-* forward emails to a separate inbox and easily reply to them
-* filtering & forwarding of emails to multiple webhooks/targets based on a simple rule engine
-* retry & failsafe to guarantee delivery to each webhook/target
-  * built on top of the Sendgrid [retry mechanism](https://sendgrid.com/docs/API_Reference/SMTP_API/errors_and_troubleshooting.html) (retry for 72 hours when error codes are received)
-* multiple supported targets and formats (webhook, storage account)
-
-See [Fault tolerance](docs/Fault%20tolerance.md) for more details on retry behaviour.
 
 # Known issues
 

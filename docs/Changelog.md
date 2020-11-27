@@ -1,3 +1,6 @@
+# v1.1.0
+
+* added enabled flag to rules, filters & actions
 # v1.0.0
 
 * breaking change: webhook format

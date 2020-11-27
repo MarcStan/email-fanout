@@ -189,9 +189,14 @@ namespace EmailFanout.Logic.Services
             var actions = new List<EmailAction>();
             foreach (var rule in config.Rules)
             {
+                if (!rule.Enabled)
+                    continue;
                 bool deliver = true;
                 foreach (var filter in rule.Filters ?? new EmailFilter[0])
                 {
+                    if (!filter.Enabled)
+                        continue;
+
                     if (!IsMatchedByFilter(mail, filter))
                     {
                         deliver = false;
@@ -201,7 +206,7 @@ namespace EmailFanout.Logic.Services
                 if (!deliver)
                     continue;
 
-                actions.AddRange(rule.Actions);
+                actions.AddRange(rule.Actions.Where(a => a.Enabled));
             }
             return actions.ToArray();
         }

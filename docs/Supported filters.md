@@ -12,6 +12,7 @@ Sender & subject example:
     "filters": [
         {
             "type": "sender contains",
+            "enabled": true,
             "oneOf": [
                 "@example.com"
             ]   
@@ -33,6 +34,8 @@ Sender & subject example:
 The example above can be read as:
 
 Forward all emails where `the sender contains '@example.com'` AND `subject contains 'Hello' or 'World'`
+
+As with rules and actions, filters too suport the `enabled` field (also defaults to `true`) if not set.
 
 ## Supported filters
 

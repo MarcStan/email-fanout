@@ -14,7 +14,8 @@ The config file (`email-fanout.json`) looks like this:
 {
     "rules": [
         {
-            "comment": "This target forwards all emails to another webhook (description for yourself what this target does)",
+            "_comment": "This target forwards all emails to another webhook (description for yourself what this target does)",
+            "enabled": true,
             "filters": null,
             "actions": [
                 {
@@ -32,7 +33,9 @@ The config file (`email-fanout.json`) looks like this:
 }
 ```
 
-Each rule consists of the required property `actions`, an optional `filters` and you can use `comment` to include a an optional description for yourself.
+Each rule consists of the required property `actions`, an optional `filters` and you can use `_comment` to include an optional description for yourself.
+
+The optional field `enabled` can be used to disable individual rules (if not set it defaults to `true`).
 
 In the example above a single action is defined. It is of type `Forward` and will be executed for each received email because `filters` is null.
 

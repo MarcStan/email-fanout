@@ -1,9 +1,29 @@
 {
   "rules": [
     {
+      "enabled": false,
+      "filters": null,
+      "actions": [
+        {
+          "id": "archive-all",
+          "type": "Archive",
+          "properties": {
+            "containerName": "backup"
+          }
+        }
+      ]
+    },
+    {
       "filters": [
         {
           "type": "sender contains",
+          "oneOf": [
+            "@example.com"
+          ]
+        },
+        {
+          "enabled": false,
+          "type": "!sender contains",
           "oneOf": [
             "@example.com"
           ]
@@ -11,7 +31,8 @@
       ],
       "actions": [
         {
-          "id": "archive-all",
+          "enabled": false,
+          "id": "archive-from-sender",
           "type": "Archive",
           "properties": {
             "containerName": "backup"
