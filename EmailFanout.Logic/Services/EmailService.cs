@@ -2,6 +2,7 @@
 using EmailFanout.Logic.Models;
 using Newtonsoft.Json;
 using SendGrid;
+using SendGrid.Helpers.Errors.Model;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
@@ -163,7 +164,15 @@ namespace EmailFanout.Logic.Services
 
                         domain = domain.StartsWith("@") ? domain.Substring(1) : domain;
                         var fromEmail = emails.FirstOrDefault(e => e.EndsWith($"@{domain}", StringComparison.InvariantCultureIgnoreCase)) ?? $"unknown@{domain}";
-                        var mail = MailHelper.CreateSingleEmail(new EmailAddress(fromEmail), new EmailAddress(targetEmail), request.Email.Subject, prefix + request.Email.Text, prefix + request.Email.Html);
+                        string EnsureNotEmpty(string message)
+                        {
+                            // pgp signed emails have no content but attachments only;
+                            // seems to be this bug
+                            // https://github.com/sendgrid/sendgrid-nodejs/issues/435
+                            return string.IsNullOrEmpty(message) ? " " : message;
+                        }
+
+                        var mail = MailHelper.CreateSingleEmail(new EmailAddress(fromEmail), new EmailAddress(targetEmail), request.Email.Subject, EnsureNotEmpty(prefix + request.Email.Text), EnsureNotEmpty(prefix + request.Email.Html));
                         // causes the reply button to magically replace "fromEmail" with the email of the original author -> respond gets sent to the correct person
                         mail.ReplyTo = request.Email.From;
                         foreach (var attachment in request.Email.Attachments)
@@ -176,7 +185,12 @@ namespace EmailFanout.Logic.Services
                                 Type = attachment.ContentType
                             });
                         }
-                        await sendgridClient.SendEmailAsync(mail, cancellationToken);
+                        var response = await sendgridClient.SendEmailAsync(mail, cancellationToken);
+                        if (response.StatusCode != HttpStatusCode.Accepted)
+                        {
+                            var errorResponse = await response.Body.ReadAsStringAsync();
+                            throw new BadRequestException($"Sendgrid did not accept. The response was: {response.StatusCode}." + Environment.NewLine + errorResponse);
+                        }
                     }
                     break;
                 default:

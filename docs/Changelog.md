@@ -1,6 +1,12 @@
+# v1.1.1
+
+* Handle sendgrid error response on send correctly
+* Fix for emails with empty content (e.g. attachment only/pgp signed)
+
 # v1.1.0
 
 * added enabled flag to rules, filters & actions
+
 # v1.0.0
 
 * breaking change: webhook format

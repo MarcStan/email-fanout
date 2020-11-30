@@ -30,13 +30,7 @@ namespace EmailFanout
             builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
             builder.Services.AddSingleton(p =>
             {
-                var options =
-#if DEBUG
-                // workaround for MSA account & Visual Studio not working in 1.3: https://github.com/Azure/azure-sdk-for-net/issues/16306#issuecomment-724189313
-                new DefaultAzureCredentialOptions { ExcludeVisualStudioCredential = true, ExcludeSharedTokenCacheCredential = true };
-#else
-                new DefaultAzureCredentialOptions();
-#endif
+                var options = new DefaultAzureCredentialOptions();
                 var keyVaultName = p.GetRequiredService<IConfiguration>()["KeyVaultName"];
                 return new SecretClient(new Uri($"https://{keyVaultName}.vault.azure.net"), new DefaultAzureCredential(options));
             });
