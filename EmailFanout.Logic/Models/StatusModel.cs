@@ -34,6 +34,6 @@ namespace EmailFanout.Logic.Models
 
         public string ActionId { get; set; }
 
-        public DateTimeOffset ReceivedAt { get; set; }
+        public string ReceivedAt { get; set; }
     }
 }

@@ -16,9 +16,10 @@ namespace EmailFanout.Logic.Models
         public Email Email { get; set; }
 
         /// <summary>
-        /// The date of the email
+        /// The date of the email.
+        /// May not be parsable by .Net parser depending on date format.
         /// </summary>
-        public DateTimeOffset Timestamp { get; set; }
+        public string Timestamp { get; set; }
 
         /// <summary>
         /// Checksum of the email
@@ -39,7 +40,7 @@ namespace EmailFanout.Logic.Models
                 Body = ms,
                 Email = email,
                 Checksum = checksum,
-                Timestamp = DateTimeOffset.Parse(email.Date)
+                Timestamp = email.Date
             };
             return request;
         }

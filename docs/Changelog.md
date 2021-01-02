@@ -1,3 +1,7 @@
+# v1.1.2
+
+* Don't parse "email sent" date as not all date formats are parsable by .Net
+
 # v1.1.1
 
 * Handle sendgrid error response on send correctly
