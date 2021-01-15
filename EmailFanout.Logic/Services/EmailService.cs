@@ -85,8 +85,15 @@ namespace EmailFanout.Logic.Services
             switch (action.Type)
             {
                 case ActionType.Archive:
-                    // one folder per day is fine for now 
-                    var id = $"{request.Timestamp:yyyy-MM}/{request.Timestamp:dd}/{request.Timestamp:HH-mm-ss}_{request.Email.From.Email} - {request.Email.Subject}";
+                    // one folder per day is fine for now
+                    if (!DateTimeOffset.TryParse(request.Timestamp, out DateTimeOffset ts))
+                    {
+                        // some dates are not parsable, just use todays date
+                        // not 100% perfect (retried or delayed emails) might have wrong date
+                        // but only archival mode
+                        ts = DateTimeOffset.UtcNow;
+                    }
+                    var id = $"{ts:yyyy-MM}/{request.Timestamp:dd}/{request.Timestamp:HH-mm-ss}_{request.Email.From.Email} - {request.Email.Subject}";
 
                     var name = $"{id}.json";
                     var containerName = action.Properties.Property("containerName").Value.ToString();
